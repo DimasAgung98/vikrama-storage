@@ -90,26 +90,28 @@
                     </button>
                 </div>
             </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-600">
-                        <div class="text-gray-500 text-xs font-semibold uppercase">Total Item</div>
-                        <div class="text-2xl font-bold mt-1" id="totalProducts">0</div>
-                    </div>
-                    
-                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-yellow-500">
-                        <div class="text-gray-500 text-xs font-semibold uppercase">Total Aset (Modal)</div>
-                        <div class="text-2xl font-bold text-yellow-700 mt-1" id="totalCostValue">Rp 0</div>
-                    </div>
-    
-                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-600">
-                        <div class="text-gray-500 text-xs font-semibold uppercase">Est. Omzet (Jual)</div>
-                        <div class="text-2xl font-bold text-green-700 mt-1" id="totalSellValue">Rp 0</div>
-                    </div>
-    
-                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-purple-600">
-                        <div class="text-gray-500 text-xs font-semibold uppercase">Est. Keuntungan</div>
-                        <div class="text-2xl font-bold text-purple-700 mt-1" id="totalMarginValue">Rp 0</div>
-                    </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-600">
+                    <div class="text-gray-500 text-xs font-semibold uppercase">Total Stok</div>
+                    <div class="text-2xl font-bold mt-1" id="totalProducts">0</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-yellow-500">
+                    <div class="text-gray-500 text-xs font-semibold uppercase">Aset Gudang</div>
+                    <div class="text-lg font-bold text-yellow-700 mt-1" id="totalCostValue">Rp 0</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-600">
+                    <div class="text-gray-500 text-xs font-semibold uppercase">Potensi Omzet</div>
+                    <div class="text-lg font-bold text-green-700 mt-1" id="totalSellValue">Rp 0</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-purple-300">
+                    <div class="text-gray-500 text-xs font-semibold uppercase">Potensi Profit</div>
+                    <div class="text-lg font-bold text-purple-400 mt-1" id="totalMarginValue">Rp 0</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-emerald-600 bg-emerald-50">
+                    <div class="text-emerald-800 text-xs font-bold uppercase">Keuntungan CAIR</div>
+                    <div class="text-2xl font-bold text-emerald-700 mt-1" id="realizedProfitValue">Rp 0</div>
+                    <div class="text-[10px] text-emerald-600">Dari transaksi sukses</div>
+                </div>
             </div>
 
             <div id="loadingState" class="flex justify-center items-center h-64"><div class="loading-spinner rounded-full border-4 border-t-4 border-gray-200 h-12 w-12"></div></div>
@@ -235,11 +237,35 @@
             </div>
         </div>
     </div>
+        <div id="editTrxModal" class="fixed inset-0 bg-black bg-opacity-50 z-[70] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm">
+            <div class="p-4 border-b bg-gray-50 rounded-t-xl flex justify-between items-center">
+                <h3 class="font-bold text-gray-800">Edit Info Transaksi</h3>
+                <button onclick="document.getElementById('editTrxModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-5 space-y-4">
+                <input type="hidden" id="editTrxId">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tanggal</label>
+                    <input type="date" id="editTrxDate" class="w-full border rounded px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Kelompok</label>
+                    <input type="text" id="editTrxGroup" class="w-full border rounded px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">PIC</label>
+                    <input type="text" id="editTrxPic" class="w-full border rounded px-3 py-2">
+                </div>
+                <button onclick="window.saveEditTrx()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition">Update Data</button>
+            </div>
+        </div>
+    </div>
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
         import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, getDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
         // =================================================================
         // AREA INI YANG HARUS ANDA ISI DENGAN KODE DARI FIREBASE
@@ -444,41 +470,50 @@
         // --- HISTORY LOGIC ---
         function loadHistoryData() {
             const tbody = document.getElementById('transactionTableBody');
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4"><div class="loading-spinner h-6 w-6 mx-auto rounded-full border-2 border-t-2 border-gray-300"></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4">Loading...</td></tr>';
 
-            // Ambil data dari koleksi baru 'vikrama_transactions'
-            const q = collection(db, 'vikrama_transactions');
-            onSnapshot(q, (snapshot) => {
-                const transactions = snapshot.docs.map(doc => doc.data());
-                
-                // Sortir berdasarkan tanggal (Terbaru di atas)
+            onSnapshot(collection(db, 'vikrama_transactions'), (snapshot) => {
+                const transactions = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
                 transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
 
+                // --- HITUNG KEUNTUNGAN REAL (CAIR) ---
+                let totalRealizedProfit = 0;
+                transactions.forEach(trx => {
+                    // Jika data lama belum punya field totalProfit, hitung manual
+                    const profit = trx.totalProfit !== undefined ? trx.totalProfit : (trx.totalPrice - (trx.totalCost || 0));
+                    totalRealizedProfit += profit;
+                });
+                document.getElementById('realizedProfitValue').innerText = 'Rp ' + totalRealizedProfit.toLocaleString('id-ID');
+
+                // --- RENDER TABEL ---
                 tbody.innerHTML = '';
-                if (transactions.length === 0) {
-                    document.getElementById('emptyHistory').classList.remove('hidden');
-                    return;
-                }
+                if (transactions.length === 0) { document.getElementById('emptyHistory').classList.remove('hidden'); return; }
                 document.getElementById('emptyHistory').classList.add('hidden');
 
                 transactions.forEach(trx => {
-                    // Format item menjadi string rapi: "AK-47 (2), Pistol (1)"
-                    const itemsSummary = trx.items.map(i => `<span class="bg-gray-100 px-2 py-1 rounded text-xs font-bold mr-1">${i.name} (${i.qty})</span>`).join(' ');
+                    const itemsSummary = trx.items.map(i => `<span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold mr-1 border">${i.name} x${i.qty}</span>`).join(' ');
+                    // Hitung profit per transaksi utk ditampilkan (Opsional)
+                    const profit = trx.totalProfit || 0;
 
                     const row = `
-                        <tr class="hover:bg-gray-50 transition">
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-600">
-                                <i class="far fa-calendar-alt mr-2 text-gray-400"></i>${trx.date}
+                        <tr class="hover:bg-gray-50 transition border-b">
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-600 align-top">
+                                <div class="font-bold">${trx.date}</div>
                             </td>
-                            <td class="px-6 py-4">
-                                <div class="font-bold text-gray-800">${trx.groupName || '-'}</div>
-                                <div class="text-xs text-gray-500"><i class="fas fa-user mr-1"></i> ${trx.picName || '-'}</div>
+                            <td class="px-6 py-4 align-top">
+                                <div class="font-bold text-gray-800">${trx.groupName}</div>
+                                <div class="text-xs text-gray-500"><i class="fas fa-user mr-1"></i> ${trx.picName}</div>
                             </td>
-                            <td class="px-6 py-4">
-                                <div class="flex flex-wrap gap-1">${itemsSummary}</div>
+                            <td class="px-6 py-4 align-top">
+                                <div class="flex flex-wrap gap-1 mb-1">${itemsSummary}</div>
                             </td>
-                            <td class="px-6 py-4 text-right font-bold text-green-700">
-                                Rp ${trx.totalPrice.toLocaleString('id-ID')}
+                            <td class="px-6 py-4 text-right align-top">
+                                <div class="font-bold text-green-700">Rp ${trx.totalPrice.toLocaleString('id-ID')}</div>
+                                <div class="text-xs text-emerald-600 font-semibold">+ Rp ${profit.toLocaleString('id-ID')} (Cuan)</div>
+                            </td>
+                            <td class="px-6 py-4 text-right align-top">
+                                <button onclick="window.openEditTrx('${trx.id}')" class="text-blue-500 hover:text-blue-700 mx-1" title="Edit Info"><i class="fas fa-pen"></i></button>
+                                <button onclick="window.deleteTrx('${trx.id}')" class="text-red-500 hover:text-red-700 mx-1" title="Hapus & Balikin Stok"><i class="fas fa-trash"></i></button>
                             </td>
                         </tr>
                     `;
@@ -605,59 +640,116 @@
         }
         
         window.processCheckout = () => {
-            // 1. Validasi Input
             const dateVal = document.getElementById('posDate').value;
             const groupVal = document.getElementById('posGroup').value;
             const picVal = document.getElementById('posPic').value;
 
-            if(!dateVal || !groupVal || !picVal) {
-                showToast("Mohon lengkapi Tanggal, Nama Kelompok, dan PIC!", "error");
-                return;
-            }
+            if(!dateVal || !groupVal || !picVal) { showToast("Lengkapi data transaksi!", "error"); return; }
 
-            window.showConfirm('Proses transaksi ini sekarang?', async (yes) => {
+            window.showConfirm('Proses transaksi?', async (yes) => {
                 if(!yes) return;
-                
-                const btn = document.getElementById('btnCheckout'); 
-                btn.disabled = true; 
-                btn.innerText = 'Memproses...';
+                const btn = document.getElementById('btnCheckout'); btn.disabled = true; btn.innerText = 'Memproses...';
 
                 try {
-                    let totalTrx = 0;
-                    
-                    // 2. Kurangi Stok di Inventory
+                    let totalSell = 0;
+                    let totalCost = 0; // Variabel baru untuk hitung modal transaksi ini
+
+                    // Update Stok & Hitung Total
                     for (const item of posCart) {
                         const product = allProducts.find(p => p.id === item.id);
                         if(product) {
                             const newStock = Math.max(0, (product.stock || 0) - item.qty);
                             await updateDoc(doc(db, 'vikrama_inventory', item.id), { stock: newStock });
                         }
-                        totalTrx += (item.price * item.qty);
+                        totalSell += (item.price * item.qty);
+                        totalCost += (item.cost * item.qty); // Simpan modal
                     }
 
-                    // 3. SIMPAN KE RIWAYAT (Koleksi Baru)
+                    // SIMPAN KE HISTORY (Lengkap dengan Profit)
                     await addDoc(collection(db, 'vikrama_transactions'), {
                         date: dateVal,
                         groupName: groupVal,
                         picName: picVal,
-                        items: posCart.map(i => ({ name: i.name, qty: i.qty, price: i.price })), // Simpan detail item
-                        totalPrice: totalTrx,
+                        // Simpan detail item + modalnya agar hitungan profit akurat selamanya
+                        items: posCart.map(i => ({ name: i.name, qty: i.qty, price: i.price, cost: i.cost })), 
+                        totalPrice: totalSell,
+                        totalCost: totalCost, // Simpan total modal
+                        totalProfit: totalSell - totalCost, // Simpan total cuan
                         createdAt: new Date().toISOString()
                     });
 
-                    showToast("Transaksi Berhasil & Disimpan!", "success");
-                    posCart = []; 
-                    renderCart();
-                    document.getElementById('posModal').classList.add('hidden'); // Tutup POS otomatis
-                    
-                } catch(e) {
-                    console.error(e);
-                    showToast("Gagal memproses transaksi.", "error");
-                } finally {
-                    btn.disabled = false;
-                    btn.innerHTML = '<span>Proses Transaksi</span><i class="fas fa-arrow-right ml-2"></i>';
+                    showToast("Sukses!", "success");
+                    posCart = []; renderCart(); document.getElementById('posModal').classList.add('hidden');
+                } catch(e) { console.error(e); showToast("Gagal.", "error"); }
+                finally { btn.disabled = false; btn.innerHTML = 'Proses Transaksi'; }
+            });
+        };
+        // --- HISTORY ACTIONS (EDIT & DELETE) ---
+        
+        // 1. DELETE (Hapus Transaksi + Kembalikan Stok)
+        window.deleteTrx = (id) => {
+            window.showConfirm("Hapus transaksi ini? Stok barang akan DIKEMBALIKAN ke gudang.", async (yes) => {
+                if(!yes) return;
+                try {
+                    // Ambil data transaksi dulu
+                    const ref = doc(db, 'vikrama_transactions', id);
+                    const snap = await getDoc(ref); // Perlu import getDoc dulu!
+                    if(!snap.exists()) return;
+                    const data = snap.data();
+
+                    // Balikin Stok (Looping item)
+                    for(const item of data.items) {
+                        // Cari produk berdasarkan nama (Agak tricky kalau nama diganti, tapi ini best effort)
+                        // Lebih aman cari manual di array allProducts
+                        const product = allProducts.find(p => p.name === item.name); 
+                        if(product) {
+                            const currentStock = product.stock || 0;
+                            await updateDoc(doc(db, 'vikrama_inventory', product.id), {
+                                stock: currentStock + item.qty 
+                            });
+                        }
+                    }
+
+                    // Hapus Dokumen
+                    await deleteDoc(ref);
+                    showToast("Transaksi dihapus & Stok dikembalikan.", "success");
+                } catch(err) {
+                    console.error(err);
+                    showToast("Gagal menghapus.", "error");
                 }
             });
+        };
+
+        // 2. EDIT INFO (Buka Modal)
+        window.openEditTrx = (id) => {
+            // Kita cari datanya dari allTransactions (tapi karena kita gak simpan variabel global transaksi, kita fetch single doc atau cari manual)
+            // Cara cepat: Ambil dari DOM atau fetch ulang. Biar gampang kita fetch single doc.
+            const ref = doc(db, 'vikrama_transactions', id);
+            getDoc(ref).then(snap => {
+                if(snap.exists()){
+                    const d = snap.data();
+                    document.getElementById('editTrxId').value = id;
+                    document.getElementById('editTrxDate').value = d.date;
+                    document.getElementById('editTrxGroup').value = d.groupName;
+                    document.getElementById('editTrxPic').value = d.picName;
+                    document.getElementById('editTrxModal').classList.remove('hidden');
+                }
+            });
+        };
+
+        // 3. SAVE EDIT
+        window.saveEditTrx = async () => {
+            const id = document.getElementById('editTrxId').value;
+            const newData = {
+                date: document.getElementById('editTrxDate').value,
+                groupName: document.getElementById('editTrxGroup').value,
+                picName: document.getElementById('editTrxPic').value
+            };
+            try {
+                await updateDoc(doc(db, 'vikrama_transactions', id), newData);
+                document.getElementById('editTrxModal').classList.add('hidden');
+                showToast("Data transaksi diupdate!", "success");
+            } catch(e) { showToast("Gagal update.", "error"); }
         };
 
         // Search POS Listeners
@@ -725,5 +817,6 @@
 </body>
 
 </html>
+
 
 
