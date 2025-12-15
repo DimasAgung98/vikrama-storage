@@ -53,9 +53,26 @@
     <div class="flex flex-1 overflow-hidden">
         <aside class="w-64 bg-white shadow-md overflow-y-auto hidden md:block border-r border-gray-200">
             <div class="p-5 border-b bg-gray-50">
-                <h2 class="font-bold text-gray-700 uppercase text-xs tracking-wider flex items-center"><i class="fas fa-filter mr-2"></i> Filter Kategori</h2>
+                <h2 class="font-bold text-gray-700 uppercase text-xs tracking-wider flex items-center">
+                    <i class="fas fa-bars mr-2"></i> Menu Utama
+                </h2>
             </div>
-            <nav class="mt-2 px-3 pb-4" id="categoryList"></nav>
+            <nav class="mt-2 px-3 pb-4 space-y-1">
+                <button onclick="window.switchPage('inventory')" id="menu-inventory" class="w-full text-left px-4 py-3 rounded-lg transition flex items-center bg-blue-100 text-blue-700 font-bold border-l-4 border-blue-600">
+                    <i class="fas fa-boxes mr-3"></i> Stok Senjata
+                </button>
+                <button onclick="window.switchPage('history')" id="menu-history" class="w-full text-left px-4 py-3 rounded-lg transition flex items-center text-gray-600 hover:bg-gray-100">
+                    <i class="fas fa-history mr-3"></i> Riwayat Transaksi
+                </button>
+            </nav>
+            
+            <div class="p-5 border-b bg-gray-50 mt-4">
+                <h2 class="font-bold text-gray-700 uppercase text-xs tracking-wider flex items-center">
+                    <i class="fas fa-filter mr-2"></i> Filter Kategori
+                </h2>
+            </div>
+            <nav class="mt-2 px-3 pb-4" id="categoryList">
+                </nav>
         </aside>
 
         <main class="flex-1 overflow-y-auto p-4 md:p-8 relative bg-gray-50">
@@ -91,6 +108,27 @@
 
             <div id="loadingState" class="flex justify-center items-center h-64"><div class="loading-spinner rounded-full border-4 border-t-4 border-gray-200 h-12 w-12"></div></div>
             <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 hidden"></div>
+            
+            <div id="historyView" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-900 text-white uppercase font-bold text-xs">
+                            <tr>
+                                <th class="px-6 py-4">Tanggal</th>
+                                <th class="px-6 py-4">Kelompok & PIC</th>
+                                <th class="px-6 py-4">Detail Barang</th>
+                                <th class="px-6 py-4 text-right">Total Transaksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionTableBody" class="divide-y divide-gray-200">
+                            </tbody>
+                    </table>
+                </div>
+                <div id="emptyHistory" class="hidden p-10 text-center text-gray-400">
+                    <i class="fas fa-receipt text-4xl mb-3"></i>
+                    <p>Belum ada riwayat transaksi.</p>
+                </div>
+            </div>
             <div id="emptyState" class="hidden flex flex-col items-center justify-center h-64 text-gray-400"><i class="fas fa-crosshairs text-6xl mb-4 opacity-30"></i><p>Tidak ada data.</p></div>
         </main>
     </div>
@@ -109,6 +147,24 @@
                 <div id="posProductGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 overflow-y-auto p-1 pb-20"></div>
             </div>
             <div class="w-full md:w-96 bg-white shadow-xl flex flex-col shrink-0 z-10">
+                <div class="w-full md:w-96 bg-white shadow-xl flex flex-col shrink-0 z-10 border-l border-gray-200">
+                
+                <div class="p-4 bg-gray-100 border-b border-gray-200 space-y-3">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase">Tanggal Transaksi</label>
+                        <input type="date" id="posDate" class="w-full px-3 py-2 border rounded font-medium text-gray-700 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase">Nama Kelompok</label>
+                            <input type="text" id="posGroup" placeholder="Contoh: Yakuza" class="w-full px-3 py-2 border rounded text-sm focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase">PIC / Penanggung Jawab</label>
+                            <input type="text" id="posPic" placeholder="Contoh: Don Billy" class="w-full px-3 py-2 border rounded text-sm focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
                 <div class="p-4 bg-blue-50 border-b border-blue-100"><h3 class="font-bold text-blue-900"><i class="fas fa-shopping-cart mr-2"></i> Keranjang</h3></div>
                 <div class="flex-1 overflow-y-auto p-4 space-y-3" id="cartItems"></div>
                 <div class="p-4 bg-gray-50 border-t border-gray-200 space-y-2">
@@ -324,6 +380,43 @@
         });
 
         // Global functions for HTML access
+        // --- PAGE SWITCHER ---
+        window.switchPage = (page) => {
+            const btnInv = document.getElementById('menu-inventory');
+            const btnHis = document.getElementById('menu-history');
+            const grid = document.getElementById('productGrid');
+            const history = document.getElementById('historyView');
+            const stats = document.querySelector('.grid.grid-cols-1.sm\\:grid-cols-2'); // Selector utk stats
+            const empty = document.getElementById('emptyState');
+            const title = document.getElementById('pageTitle');
+
+            if (page === 'inventory') {
+                // Style Tombol
+                btnInv.className = "w-full text-left px-4 py-3 rounded-lg transition flex items-center bg-blue-100 text-blue-700 font-bold border-l-4 border-blue-600";
+                btnHis.className = "w-full text-left px-4 py-3 rounded-lg transition flex items-center text-gray-600 hover:bg-gray-100";
+                
+                // Tampilan
+                grid.classList.remove('hidden');
+                history.classList.add('hidden');
+                title.innerText = "Stok Senjata";
+                if(stats) stats.classList.remove('hidden'); // Tampilkan stats
+                if(allProducts.length === 0) empty.classList.remove('hidden');
+            } else {
+                // Style Tombol
+                btnHis.className = "w-full text-left px-4 py-3 rounded-lg transition flex items-center bg-purple-100 text-purple-700 font-bold border-l-4 border-purple-600";
+                btnInv.className = "w-full text-left px-4 py-3 rounded-lg transition flex items-center text-gray-600 hover:bg-gray-100";
+
+                // Tampilan
+                grid.classList.add('hidden');
+                history.classList.remove('hidden');
+                title.innerText = "Riwayat Transaksi";
+                if(stats) stats.classList.add('hidden'); // Sembunyikan stats stok
+                empty.classList.add('hidden');
+                
+                // Load Data History
+                loadHistoryData();
+            }
+        };
         window.openModal = () => {
             document.getElementById('productForm').reset();
             document.getElementById('productId').value = '';
@@ -391,7 +484,16 @@
         window.confirmNo = () => { document.getElementById('confirmationModal').classList.add('hidden'); if(confirmCb) confirmCb(false); };
 
         // POS & Cart Logic
-        window.openPOS = () => { document.getElementById('posModal').classList.remove('hidden'); posCart=[]; renderCart(); renderPosProducts(); };
+        window.openPOS = () => {
+            document.getElementById('posModal').classList.remove('hidden');
+            // Set Default Date ke Hari Ini
+            document.getElementById('posDate').valueAsDate = new Date();
+            document.getElementById('posGroup').value = '';
+            document.getElementById('posPic').value = '';
+            posCart = [];
+            renderCart();
+            renderPosProducts();
+        };
         window.closePOS = () => { if(posCart.length > 0) window.showConfirm("Batalkan?", (y)=>{if(y) document.getElementById('posModal').classList.add('hidden')}); else document.getElementById('posModal').classList.add('hidden'); };
         
         window.addToCart = (id) => {
@@ -436,6 +538,51 @@
             });
             document.getElementById('cartTotalSell').innerText = 'Rp ' + t.toLocaleString('id-ID');
             document.getElementById('btnCheckout').disabled = posCart.length === 0;
+        }
+        // --- HISTORY LOGIC ---
+        function loadHistoryData() {
+            const tbody = document.getElementById('transactionTableBody');
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4"><div class="loading-spinner h-6 w-6 mx-auto rounded-full border-2 border-t-2 border-gray-300"></div></td></tr>';
+
+            // Ambil data dari koleksi baru 'vikrama_transactions'
+            const q = collection(db, 'vikrama_transactions');
+            onSnapshot(q, (snapshot) => {
+                const transactions = snapshot.docs.map(doc => doc.data());
+                
+                // Sortir berdasarkan tanggal (Terbaru di atas)
+                transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                tbody.innerHTML = '';
+                if (transactions.length === 0) {
+                    document.getElementById('emptyHistory').classList.remove('hidden');
+                    return;
+                }
+                document.getElementById('emptyHistory').classList.add('hidden');
+
+                transactions.forEach(trx => {
+                    // Format item menjadi string rapi: "AK-47 (2), Pistol (1)"
+                    const itemsSummary = trx.items.map(i => `<span class="bg-gray-100 px-2 py-1 rounded text-xs font-bold mr-1">${i.name} (${i.qty})</span>`).join(' ');
+
+                    const row = `
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-600">
+                                <i class="far fa-calendar-alt mr-2 text-gray-400"></i>${trx.date}
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-gray-800">${trx.groupName || '-'}</div>
+                                <div class="text-xs text-gray-500"><i class="fas fa-user mr-1"></i> ${trx.picName || '-'}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex flex-wrap gap-1">${itemsSummary}</div>
+                            </td>
+                            <td class="px-6 py-4 text-right font-bold text-green-700">
+                                Rp ${trx.totalPrice.toLocaleString('id-ID')}
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            });
         }
         
         window.processCheckout = () => {
@@ -517,4 +664,5 @@
     </script>
 </body>
 </html>
+
 
