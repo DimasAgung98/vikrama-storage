@@ -12,20 +12,22 @@
         .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         .loading-spinner { border-top-color: #3b82f6; -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
         @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .pos-item-hover:hover { background-color: #f0f9ff; border-color: #3b82f6; cursor: pointer; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 100; }
         .toast { padding: 12px 24px; border-radius: 8px; color: white; margin-top: 10px; animation: slideIn 0.3s ease-out; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .toast-error { background-color: #ef4444; }
         .toast-success { background-color: #22c55e; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        
+        /* Fix Modal Display */
+        .modal-active { display: flex !important; }
     </style>
 </head>
 <body class="text-gray-800 h-screen flex flex-col overflow-hidden">
 
     <div id="toast-container"></div>
 
-    <nav class="bg-slate-900 text-white shadow-lg z-10 border-b border-slate-700">
+    <nav class="bg-slate-900 text-white shadow-lg z-30 border-b border-slate-700 relative">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center">
@@ -39,7 +41,7 @@
                     <button onclick="window.openPOS()" class="bg-yellow-500 hover:bg-yellow-600 text-slate-900 px-4 py-2 rounded font-bold transition flex items-center shadow-lg transform hover:scale-105">
                         <i class="fas fa-cash-register mr-2"></i> Kasir
                     </button>
-                    <button onclick="document.getElementById('importModal').classList.remove('hidden')" class="bg-green-700 hover:bg-green-800 px-3 py-2 rounded text-sm transition font-medium flex items-center">
+                    <button onclick="document.getElementById('importModal').classList.remove('hidden'); document.getElementById('importModal').classList.add('flex');" class="bg-green-700 hover:bg-green-800 px-3 py-2 rounded text-sm transition font-medium flex items-center">
                         <i class="fas fa-file-excel mr-1"></i> Import
                     </button>
                     <div id="connectionStatus" class="text-xs bg-slate-800 px-2 py-1 rounded flex items-center border border-slate-600 h-8">
@@ -50,7 +52,7 @@
         </div>
     </nav>
 
-    <div class="flex flex-1 overflow-hidden">
+    <div class="flex flex-1 overflow-hidden relative z-0">
         <aside class="w-64 bg-white shadow-md overflow-y-auto hidden md:block border-r border-gray-200">
             <div class="p-5 border-b bg-gray-50">
                 <h2 class="font-bold text-gray-700 uppercase text-xs tracking-wider flex items-center">
@@ -91,7 +93,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div id="statsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-600">
                     <div class="text-gray-500 text-xs font-semibold uppercase">Total Item</div>
                     <div class="text-2xl font-bold mt-1" id="totalProducts">0</div>
@@ -133,7 +135,7 @@
         </main>
     </div>
 
-    <div id="posModal" class="fixed inset-0 bg-gray-100 z-50 hidden flex flex-col">
+    <div id="posModal" class="fixed inset-0 bg-gray-100 z-40 hidden flex-col">
         <div class="bg-slate-900 text-white p-4 flex justify-between items-center shadow-md shrink-0">
             <div class="flex items-center"><i class="fas fa-cash-register text-2xl text-yellow-500 mr-3"></i><h2 class="font-bold text-xl">POS System</h2></div>
             <button onclick="window.closePOS()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-sm font-bold"><i class="fas fa-times mr-1"></i> Tutup</button>
@@ -177,9 +179,10 @@
             </div>
         </div>
     </div>
+    </div>
 
-    <div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md">
+    <div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md relative">
             <div class="flex justify-between items-center p-5 border-b">
                 <h3 class="text-lg font-bold" id="modalTitle">Tambah Data</h3>
                 <button onclick="window.closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
@@ -200,7 +203,7 @@
         </div>
     </div>
 
-    <div id="importModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+    <div id="importModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg">
             <div class="p-5 border-b"><h3 class="text-lg font-bold">Import Excel</h3></div>
             <div class="p-6">
@@ -212,11 +215,11 @@
                 </div>
                 <div id="importStatus" class="mt-4 text-sm hidden"></div>
             </div>
-            <div class="p-5 border-t bg-gray-50 flex justify-end"><button onclick="document.getElementById('importModal').classList.add('hidden')" class="text-gray-600 font-medium px-4">Tutup</button></div>
+            <div class="p-5 border-t bg-gray-50 flex justify-end"><button onclick="document.getElementById('importModal').classList.remove('flex'); document.getElementById('importModal').classList.add('hidden')" class="text-gray-600 font-medium px-4">Tutup</button></div>
         </div>
     </div>
 
-    <div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-50 z-[60] hidden flex items-center justify-center p-4">
+    <div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-50 z-[60] hidden items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 text-center">
             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4"><i class="fas fa-exclamation-triangle text-yellow-600 text-xl"></i></div>
             <h3 class="text-lg font-medium mb-2">Konfirmasi</h3>
@@ -234,29 +237,92 @@
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
         // =================================================================
-        // AREA INI YANG HARUS ANDA ISI DENGAN KODE DARI FIREBASE
+        // CONFIG
         // =================================================================
         
         const firebaseConfig = {
             apiKey: "AIzaSyD9NymFd2G46ipaQXsOUJEZSXqcgNZDUA8",
-  authDomain: "vikrama-storage.firebaseapp.com",
-  projectId: "vikrama-storage",
-  storageBucket: "vikrama-storage.firebasestorage.app",
-  messagingSenderId: "521669285666",
-  appId: "1:521669285666:web:b1fce2336db5317795777b"
+            authDomain: "vikrama-storage.firebaseapp.com",
+            projectId: "vikrama-storage",
+            storageBucket: "vikrama-storage.firebasestorage.app",
+            messagingSenderId: "521669285666",
+            appId: "1:521669285666:web:b1fce2336db5317795777b"
         };
-
-        // =================================================================
-        // JANGAN UBAH KODE DI BAWAH INI KECUALI PAHAM
-        // =================================================================
 
         const CATEGORIES = ['Semua', 'Kelas 1', 'Kelas 2', 'Kelas 3', 'Kelas 4', 'Aksesoris'];
         let db, auth, user;
         let allProducts = [];
         let currentCategory = 'Semua';
         let searchTerm = '', posCart = [], posCategory = 'Semua', posSearch = '';
+        let historyUnsubscribe = null;
+        let confirmCb = null;
 
-        // Init Firebase
+        // =================================================================
+        // GLOBAL HELPERS (Agar tombol bisa diklik kapan saja)
+        // =================================================================
+        
+        // Helper untuk mengatur Display Flex/Hidden agar tidak bentrok
+        function toggleModalDisplay(id, show) {
+            const el = document.getElementById(id);
+            if(show) {
+                el.classList.remove('hidden');
+                el.classList.add('flex');
+            } else {
+                el.classList.add('hidden');
+                el.classList.remove('flex');
+            }
+        }
+
+        window.openModal = () => {
+            document.getElementById('productForm').reset();
+            document.getElementById('productId').value = '';
+            document.getElementById('modalTitle').innerText = 'Tambah Data';
+            toggleModalDisplay('productModal', true);
+        };
+
+        window.closeModal = () => toggleModalDisplay('productModal', false);
+        
+        window.editProduct = (id) => {
+            const p = allProducts.find(x => x.id === id);
+            if(!p) return;
+            document.getElementById('productId').value = p.id;
+            document.getElementById('name').value = p.name;
+            document.getElementById('category').value = p.category;
+            document.getElementById('stock').value = p.stock;
+            document.getElementById('costPrice').value = p.costPrice;
+            document.getElementById('sellingPrice').value = p.sellingPrice;
+            document.getElementById('modalTitle').innerText = 'Edit Data';
+            toggleModalDisplay('productModal', true);
+        };
+        
+        window.deleteProduct = (id) => {
+            window.showConfirm('Hapus data ini?', async (yes) => {
+                if(yes) await deleteDoc(doc(db, 'vikrama_inventory', id));
+            });
+        };
+
+        window.showConfirm = (msg, cb) => {
+            document.getElementById('confirmMessage').innerText = msg;
+            toggleModalDisplay('confirmationModal', true);
+            confirmCb = cb;
+        };
+
+        window.confirmYes = () => { 
+            toggleModalDisplay('confirmationModal', false);
+            if(confirmCb) confirmCb(true); 
+            confirmCb = null;
+        };
+
+        window.confirmNo = () => { 
+            toggleModalDisplay('confirmationModal', false);
+            if(confirmCb) confirmCb(false); 
+            confirmCb = null;
+        };
+
+        // =================================================================
+        // FIREBASE LOGIC
+        // =================================================================
+
         function initFirebase() {
             if (!firebaseConfig.apiKey) {
                 document.getElementById('connectionStatus').innerHTML = '<span class="text-red-400 font-bold">Config Error</span>';
@@ -283,18 +349,17 @@
         }
 
         function subscribeData() {
-            // Menggunakan 1 collection utama agar lebih mudah
             const ref = collection(db, 'vikrama_inventory');
             onSnapshot(ref, (snap) => {
                 document.getElementById('loadingState').classList.add('hidden');
                 allProducts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 allProducts.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
                 renderProducts();
-                if(!document.getElementById('posModal').classList.contains('hidden')) renderPosProducts();
+                // Render POS grid jika POS sedang terbuka (cek class flex)
+                if(document.getElementById('posModal').classList.contains('flex')) renderPosProducts();
             });
         }
 
-        // Logic UI (Disederhanakan untuk Vercel/Production)
         function renderProducts() {
             const grid = document.getElementById('productGrid');
             grid.innerHTML = '';
@@ -325,14 +390,14 @@
                 if(p.category?.includes('4')) badge='bg-blue-100 text-blue-600';
 
                 const card = document.createElement('div');
-                card.className = 'bg-white rounded-xl shadow-sm border border-gray-200 p-5 card-hover relative group flex flex-col justify-between';
+                card.className = 'bg-white rounded-xl shadow-sm border border-gray-200 p-5 card-hover relative flex flex-col justify-between';
                 card.innerHTML = `
                     <div>
                         <div class="flex justify-between items-start mb-2">
                             <span class="text-[10px] uppercase font-bold px-2 py-1 rounded-full ${badge}">${p.category}</span>
-                            <div class="opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onclick="window.editProduct('${p.id}')" class="text-blue-500 mr-2"><i class="fas fa-edit"></i></button>
-                                <button onclick="window.deleteProduct('${p.id}')" class="text-red-500"><i class="fas fa-trash"></i></button>
+                            <div class="flex gap-2">
+                                <button onclick="window.editProduct('${p.id}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 w-8 h-8 rounded-full flex items-center justify-center transition-colors z-10" title="Edit"><i class="fas fa-edit"></i></button>
+                                <button onclick="window.deleteProduct('${p.id}')" class="text-red-500 hover:text-red-700 bg-red-50 w-8 h-8 rounded-full flex items-center justify-center transition-colors z-10" title="Hapus"><i class="fas fa-trash"></i></button>
                             </div>
                         </div>
                         <h3 class="font-bold text-gray-800 mb-2">${p.name}</h3>
@@ -351,7 +416,6 @@
             });
         }
 
-        // --- CRUD & POS Functions attached to window ---
         window.updateStock = async (id, val) => {
             const p = allProducts.find(x => x.id === id);
             if(p) {
@@ -379,70 +443,47 @@
             } catch(err) { showToast("Gagal simpan", "error"); }
         });
 
-        // Global functions for HTML access
-        // --- PAGE SWITCHER ---
+        // =================================================================
+        // NAVIGATION & UI
+        // =================================================================
+        
         window.switchPage = (page) => {
             const btnInv = document.getElementById('menu-inventory');
             const btnHis = document.getElementById('menu-history');
             const grid = document.getElementById('productGrid');
             const history = document.getElementById('historyView');
-            const stats = document.querySelector('.grid.grid-cols-1.sm\\:grid-cols-2'); // Selector utk stats
+            const stats = document.getElementById('statsContainer'); 
             const empty = document.getElementById('emptyState');
             const title = document.getElementById('pageTitle');
 
+            if (historyUnsubscribe) {
+                historyUnsubscribe();
+                historyUnsubscribe = null;
+            }
+
             if (page === 'inventory') {
-                // Style Tombol
                 btnInv.className = "w-full text-left px-4 py-3 rounded-lg transition flex items-center bg-blue-100 text-blue-700 font-bold border-l-4 border-blue-600";
                 btnHis.className = "w-full text-left px-4 py-3 rounded-lg transition flex items-center text-gray-600 hover:bg-gray-100";
                 
-                // Tampilan
                 grid.classList.remove('hidden');
                 history.classList.add('hidden');
                 title.innerText = "Stok Senjata";
-                if(stats) stats.classList.remove('hidden'); // Tampilkan stats
+                if(stats) stats.classList.remove('hidden'); 
                 if(allProducts.length === 0) empty.classList.remove('hidden');
             } else {
-                // Style Tombol
                 btnHis.className = "w-full text-left px-4 py-3 rounded-lg transition flex items-center bg-purple-100 text-purple-700 font-bold border-l-4 border-purple-600";
                 btnInv.className = "w-full text-left px-4 py-3 rounded-lg transition flex items-center text-gray-600 hover:bg-gray-100";
 
-                // Tampilan
                 grid.classList.add('hidden');
                 history.classList.remove('hidden');
                 title.innerText = "Riwayat Transaksi";
-                if(stats) stats.classList.add('hidden'); // Sembunyikan stats stok
+                if(stats) stats.classList.add('hidden'); 
                 empty.classList.add('hidden');
                 
-                // Load Data History
                 loadHistoryData();
             }
         };
-        window.openModal = () => {
-            document.getElementById('productForm').reset();
-            document.getElementById('productId').value = '';
-            document.getElementById('modalTitle').innerText = 'Tambah Data';
-            document.getElementById('productModal').classList.remove('hidden');
-        };
-        window.closeModal = () => document.getElementById('productModal').classList.add('hidden');
-        window.editProduct = (id) => {
-            const p = allProducts.find(x => x.id === id);
-            if(!p) return;
-            document.getElementById('productId').value = p.id;
-            document.getElementById('name').value = p.name;
-            document.getElementById('category').value = p.category;
-            document.getElementById('stock').value = p.stock;
-            document.getElementById('costPrice').value = p.costPrice;
-            document.getElementById('sellingPrice').value = p.sellingPrice;
-            document.getElementById('modalTitle').innerText = 'Edit Data';
-            document.getElementById('productModal').classList.remove('hidden');
-        };
-        window.deleteProduct = (id) => {
-            window.showConfirm('Hapus data ini?', async (yes) => {
-                if(yes) await deleteDoc(doc(db, 'vikrama_inventory', id));
-            });
-        };
 
-        // UI & Filter
         window.filterCategory = (c) => {
             currentCategory = c;
             renderProducts();
@@ -464,7 +505,6 @@
         });
         mobSel.addEventListener('change', (e) => window.filterCategory(e.target.value));
 
-        // Toast Helper
         function showToast(msg, type) {
             const el = document.createElement('div');
             el.className = `toast ${type === 'success' ? 'toast-success' : 'toast-error'}`;
@@ -473,20 +513,12 @@
             setTimeout(() => el.remove(), 3000);
         }
 
-        // Confirm Helper
-        let confirmCb;
-        window.showConfirm = (msg, cb) => {
-            document.getElementById('confirmMessage').innerText = msg;
-            document.getElementById('confirmationModal').classList.remove('hidden');
-            confirmCb = cb;
-        };
-        window.confirmYes = () => { document.getElementById('confirmationModal').classList.add('hidden'); if(confirmCb) confirmCb(true); };
-        window.confirmNo = () => { document.getElementById('confirmationModal').classList.add('hidden'); if(confirmCb) confirmCb(false); };
-
-        // POS & Cart Logic
+        // =================================================================
+        // POS LOGIC
+        // =================================================================
+        
         window.openPOS = () => {
-            document.getElementById('posModal').classList.remove('hidden');
-            // Set Default Date ke Hari Ini
+            toggleModalDisplay('posModal', true);
             document.getElementById('posDate').valueAsDate = new Date();
             document.getElementById('posGroup').value = '';
             document.getElementById('posPic').value = '';
@@ -494,7 +526,11 @@
             renderCart();
             renderPosProducts();
         };
-        window.closePOS = () => { if(posCart.length > 0) window.showConfirm("Batalkan?", (y)=>{if(y) document.getElementById('posModal').classList.add('hidden')}); else document.getElementById('posModal').classList.add('hidden'); };
+
+        window.closePOS = () => { 
+            if(posCart.length > 0) window.showConfirm("Batalkan?", (y)=>{if(y) toggleModalDisplay('posModal', false)}); 
+            else toggleModalDisplay('posModal', false); 
+        };
         
         window.addToCart = (id) => {
             const p = allProducts.find(x => x.id === id);
@@ -539,17 +575,14 @@
             document.getElementById('cartTotalSell').innerText = 'Rp ' + t.toLocaleString('id-ID');
             document.getElementById('btnCheckout').disabled = posCart.length === 0;
         }
-        // --- HISTORY LOGIC ---
+
         function loadHistoryData() {
             const tbody = document.getElementById('transactionTableBody');
             tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4"><div class="loading-spinner h-6 w-6 mx-auto rounded-full border-2 border-t-2 border-gray-300"></div></td></tr>';
 
-            // Ambil data dari koleksi baru 'vikrama_transactions'
             const q = collection(db, 'vikrama_transactions');
-            onSnapshot(q, (snapshot) => {
+            historyUnsubscribe = onSnapshot(q, (snapshot) => {
                 const transactions = snapshot.docs.map(doc => doc.data());
-                
-                // Sortir berdasarkan tanggal (Terbaru di atas)
                 transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
 
                 tbody.innerHTML = '';
@@ -560,13 +593,15 @@
                 document.getElementById('emptyHistory').classList.add('hidden');
 
                 transactions.forEach(trx => {
-                    // Format item menjadi string rapi: "AK-47 (2), Pistol (1)"
-                    const itemsSummary = trx.items.map(i => `<span class="bg-gray-100 px-2 py-1 rounded text-xs font-bold mr-1">${i.name} (${i.qty})</span>`).join(' ');
+                    let itemsSummary = '';
+                    if(trx.items && Array.isArray(trx.items)) {
+                        itemsSummary = trx.items.map(i => `<span class="bg-gray-100 px-2 py-1 rounded text-xs font-bold mr-1">${i.name} (${i.qty})</span>`).join(' ');
+                    }
 
                     const row = `
                         <tr class="hover:bg-gray-50 transition">
                             <td class="px-6 py-4 whitespace-nowrap text-gray-600">
-                                <i class="far fa-calendar-alt mr-2 text-gray-400"></i>${trx.date}
+                                <i class="far fa-calendar-alt mr-2 text-gray-400"></i>${trx.date || '-'}
                             </td>
                             <td class="px-6 py-4">
                                 <div class="font-bold text-gray-800">${trx.groupName || '-'}</div>
@@ -576,17 +611,18 @@
                                 <div class="flex flex-wrap gap-1">${itemsSummary}</div>
                             </td>
                             <td class="px-6 py-4 text-right font-bold text-green-700">
-                                Rp ${trx.totalPrice.toLocaleString('id-ID')}
+                                Rp ${(trx.totalPrice || 0).toLocaleString('id-ID')}
                             </td>
                         </tr>
                     `;
                     tbody.innerHTML += row;
                 });
+            }, (error) => {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-red-500">Gagal memuat data. Periksa koneksi.</td></tr>';
             });
         }
         
         window.processCheckout = () => {
-            // 1. Validasi Input
             const dateVal = document.getElementById('posDate').value;
             const groupVal = document.getElementById('posGroup').value;
             const picVal = document.getElementById('posPic').value;
@@ -605,8 +641,6 @@
 
                 try {
                     let totalTrx = 0;
-                    
-                    // 2. Kurangi Stok di Inventory
                     for (const item of posCart) {
                         const product = allProducts.find(p => p.id === item.id);
                         if(product) {
@@ -616,27 +650,26 @@
                         totalTrx += (item.price * item.qty);
                     }
 
-                    // 3. SIMPAN KE RIWAYAT (Koleksi Baru)
                     await addDoc(collection(db, 'vikrama_transactions'), {
                         date: dateVal,
                         groupName: groupVal,
                         picName: picVal,
-                        items: posCart.map(i => ({ name: i.name, qty: i.qty, price: i.price })), // Simpan detail item
+                        items: posCart.map(i => ({ name: i.name, qty: i.qty, price: i.price })),
                         totalPrice: totalTrx,
                         createdAt: new Date().toISOString()
                     });
 
-                    showToast("Transaksi Berhasil & Disimpan!", "success");
+                    showToast("Transaksi Berhasil!", "success");
                     posCart = []; 
                     renderCart();
-                    document.getElementById('posModal').classList.add('hidden'); // Tutup POS otomatis
+                    toggleModalDisplay('posModal', false);
                     
                 } catch(e) {
                     console.error(e);
                     showToast("Gagal memproses transaksi.", "error");
                 } finally {
                     btn.disabled = false;
-                    btn.innerHTML = '<span>Proses Transaksi</span><i class="fas fa-arrow-right ml-2"></i>';
+                    btn.innerHTML = 'Proses Transaksi';
                 }
             });
         };
@@ -645,11 +678,9 @@
         document.getElementById('posSearchInput').addEventListener('input', (e)=>{ posSearch=e.target.value.toLowerCase(); renderPosProducts(); });
         document.getElementById('posCategoryFilter').addEventListener('change', (e)=>{ posCategory=e.target.value; renderPosProducts(); });
 
-        // Jalankan
         initFirebase();
-    // ==========================================
-        // LOGIC IMPORT EXCEL (Tambahkan ini)
-        // ==========================================
+
+        // IMPORT LOGIC
         const excelInput = document.getElementById('excelInput');
         if(excelInput) {
             excelInput.addEventListener('change', async (e) => {
@@ -673,8 +704,6 @@
                         
                         let count = 0;
                         for (const row of json) {
-                            // Normalisasi nama kolom (biar huruf besar/kecil tetap terbaca)
-                            // Kolom di Excel harus: nama, kategori, stok, modal, jual
                             await addDoc(collection(db, 'vikrama_inventory'), {
                                 name: row.nama || row.Nama || 'Item Baru',
                                 category: row.kategori || row.Kategori || 'Aksesoris',
@@ -686,12 +715,10 @@
                         }
 
                         status.innerHTML = `<span class="text-green-600 font-bold">Sukses! ${count} data masuk.</span>`;
-                        
-                        // Refresh halaman otomatis agar data muncul
                         setTimeout(() => {
-                            document.getElementById('importModal').classList.add('hidden');
+                            toggleModalDisplay('importModal', false);
                             status.innerHTML = '';
-                            excelInput.value = ''; // Reset input
+                            excelInput.value = '';
                         }, 2000);
 
                     } catch (err) {
@@ -705,6 +732,3 @@
     </script>
 </body>
 </html>
-
-
-
