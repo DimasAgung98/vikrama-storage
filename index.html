@@ -586,17 +586,58 @@
         }
         
         window.processCheckout = () => {
-            window.showConfirm("Proses transaksi?", async (y) => {
-                if(!y) return;
-                const btn = document.getElementById('btnCheckout'); btn.disabled = true; btn.innerText = "Memproses...";
+            // 1. Validasi Input
+            const dateVal = document.getElementById('posDate').value;
+            const groupVal = document.getElementById('posGroup').value;
+            const picVal = document.getElementById('posPic').value;
+
+            if(!dateVal || !groupVal || !picVal) {
+                showToast("Mohon lengkapi Tanggal, Nama Kelompok, dan PIC!", "error");
+                return;
+            }
+
+            window.showConfirm('Proses transaksi ini sekarang?', async (yes) => {
+                if(!yes) return;
+                
+                const btn = document.getElementById('btnCheckout'); 
+                btn.disabled = true; 
+                btn.innerText = 'Memproses...';
+
                 try {
-                    for(const i of posCart) {
-                        const p = allProducts.find(x => x.id === i.id);
-                        if(p) await updateDoc(doc(db, 'vikrama_inventory', i.id), { stock: Math.max(0, p.stock - i.qty) });
+                    let totalTrx = 0;
+                    
+                    // 2. Kurangi Stok di Inventory
+                    for (const item of posCart) {
+                        const product = allProducts.find(p => p.id === item.id);
+                        if(product) {
+                            const newStock = Math.max(0, (product.stock || 0) - item.qty);
+                            await updateDoc(doc(db, 'vikrama_inventory', item.id), { stock: newStock });
+                        }
+                        totalTrx += (item.price * item.qty);
                     }
-                    posCart = []; renderCart(); showToast("Transaksi Berhasil", "success");
-                } catch(e) { console.error(e); showToast("Gagal", "error"); }
-                finally { btn.disabled = false; btn.innerText = "Proses Transaksi"; }
+
+                    // 3. SIMPAN KE RIWAYAT (Koleksi Baru)
+                    await addDoc(collection(db, 'vikrama_transactions'), {
+                        date: dateVal,
+                        groupName: groupVal,
+                        picName: picVal,
+                        items: posCart.map(i => ({ name: i.name, qty: i.qty, price: i.price })), // Simpan detail item
+                        totalPrice: totalTrx,
+                        createdAt: new Date().toISOString()
+                    });
+
+                    showToast("Transaksi Berhasil & Disimpan!", "success");
+                    posCart = []; 
+                    renderCart();
+                    document.getElementById('posModal').classList.add('hidden'); // Tutup POS otomatis
+                    
+                } catch(e) {
+                    console.error(e);
+                    showToast("Gagal memproses transaksi.", "error");
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>Proses Transaksi</span><i class="fas fa-arrow-right ml-2"></i>';
+                }
             });
         };
 
@@ -664,5 +705,6 @@
     </script>
 </body>
 </html>
+
 
 
