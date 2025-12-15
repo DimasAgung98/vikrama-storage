@@ -459,7 +459,62 @@
 
         // Jalankan
         initFirebase();
+    // ==========================================
+        // LOGIC IMPORT EXCEL (Tambahkan ini)
+        // ==========================================
+        const excelInput = document.getElementById('excelInput');
+        if(excelInput) {
+            excelInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
 
+                const status = document.getElementById('importStatus');
+                status.classList.remove('hidden');
+                status.innerHTML = '<span class="text-blue-600">Membaca file...</span>';
+
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    try {
+                        const data = new Uint8Array(event.target.result);
+                        const workbook = XLSX.read(data, {type: 'array'});
+                        const sheetName = workbook.SheetNames[0];
+                        const sheet = workbook.Sheets[sheetName];
+                        const json = XLSX.utils.sheet_to_json(sheet);
+
+                        status.innerHTML = `<span class="text-blue-600">Mengupload ${json.length} item... (Mohon tunggu)</span>`;
+                        
+                        let count = 0;
+                        for (const row of json) {
+                            // Normalisasi nama kolom (biar huruf besar/kecil tetap terbaca)
+                            // Kolom di Excel harus: nama, kategori, stok, modal, jual
+                            await addDoc(collection(db, 'vikrama_inventory'), {
+                                name: row.nama || row.Nama || 'Item Baru',
+                                category: row.kategori || row.Kategori || 'Aksesoris',
+                                stock: parseInt(row.stok || row.Stok) || 0,
+                                costPrice: parseInt(row.modal || row.Modal) || 0,
+                                sellingPrice: parseInt(row.jual || row.Jual) || 0
+                            });
+                            count++;
+                        }
+
+                        status.innerHTML = `<span class="text-green-600 font-bold">Sukses! ${count} data masuk.</span>`;
+                        
+                        // Refresh halaman otomatis agar data muncul
+                        setTimeout(() => {
+                            document.getElementById('importModal').classList.add('hidden');
+                            status.innerHTML = '';
+                            excelInput.value = ''; // Reset input
+                        }, 2000);
+
+                    } catch (err) {
+                        console.error(err);
+                        status.innerHTML = `<span class="text-red-600">Gagal: ${err.message}</span>`;
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
     </script>
 </body>
 </html>
+
