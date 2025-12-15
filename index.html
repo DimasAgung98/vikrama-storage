@@ -136,50 +136,78 @@
         </main>
     </div>
 
-    <div id="posModal" class="fixed inset-0 bg-gray-100 z-40 hidden flex-col">
-        <div class="bg-slate-900 text-white p-4 flex justify-between items-center shadow-md shrink-0">
-            <div class="flex items-center"><i class="fas fa-cash-register text-2xl text-yellow-500 mr-3"></i><h2 class="font-bold text-xl">POS System</h2></div>
-            <button onclick="window.closePOS()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-sm font-bold"><i class="fas fa-times mr-1"></i> Tutup</button>
-        </div>
-        <div class="flex flex-1 overflow-hidden">
-            <div class="flex-1 flex flex-col p-4 border-r border-gray-300 bg-gray-50">
-                <div class="mb-4 flex gap-2">
-                    <input type="text" id="posSearchInput" placeholder="Cari produk..." class="flex-1 px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-lg">
-                    <select id="posCategoryFilter" class="w-1/3 px-3 py-3 border border-gray-300 rounded-lg shadow-sm bg-white font-medium"></select>
+    <div id="posModal" class="fixed inset-0 z-[100] hidden bg-gray-100 flex flex-col h-screen w-screen overflow-hidden">
+        
+        <div class="bg-slate-900 text-white p-4 flex justify-between items-center shadow-md shrink-0 z-20">
+            <div class="flex items-center">
+                <div class="bg-yellow-500 p-2 rounded-lg mr-3 text-slate-900 font-bold">
+                    <i class="fas fa-cash-register"></i>
                 </div>
-                <div id="posProductGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 overflow-y-auto p-1 pb-20"></div>
+                <div>
+                    <h2 class="font-bold text-lg leading-none">POS System</h2>
+                    <p class="text-xs text-slate-400">Kasir Vikrama Kulapati</p>
+                </div>
             </div>
-            <div class="w-full md:w-96 bg-white shadow-xl flex flex-col shrink-0 z-10">
-                <div class="w-full md:w-96 bg-white shadow-xl flex flex-col shrink-0 z-10 border-l border-gray-200">
+            <button onclick="window.closePOS()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-bold text-sm transition">
+                <i class="fas fa-times mr-2"></i>Tutup
+            </button>
+        </div>
+
+        <div class="flex flex-1 overflow-hidden">
+            
+            <div class="flex-1 flex flex-col bg-gray-50 border-r border-gray-300 min-w-0">
+                <div class="p-4 bg-white border-b border-gray-200 flex gap-3 shadow-sm shrink-0">
+                    <input type="text" id="posSearchInput" placeholder="Cari produk..." class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                    <select id="posCategoryFilter" class="border border-gray-300 rounded-lg px-4 py-2 bg-white font-bold text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none">
+                        </select>
+                </div>
                 
-                <div class="p-4 bg-gray-100 border-b border-gray-200 space-y-3">
+                <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                    <div id="posProductGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-20">
+                        </div>
+                </div>
+            </div>
+
+            <div class="w-full md:w-[400px] bg-white shadow-xl flex flex-col shrink-0 z-10 border-l border-gray-200 h-full">
+                
+                <div class="p-4 bg-blue-50 border-b border-blue-100 space-y-3 shrink-0">
                     <div>
-                        <label class="text-xs font-bold text-gray-500 uppercase">Tanggal Transaksi</label>
-                        <input type="date" id="posDate" class="w-full px-3 py-2 border rounded font-medium text-gray-700 focus:ring-2 focus:ring-blue-500">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase">Tanggal</label>
+                        <input type="date" id="posDate" class="w-full px-3 py-1.5 border rounded font-medium text-sm">
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <label class="text-xs font-bold text-gray-500 uppercase">Nama Kelompok</label>
-                            <input type="text" id="posGroup" placeholder="Contoh: Yakuza" class="w-full px-3 py-2 border rounded text-sm focus:ring-2 focus:ring-blue-500">
+                            <label class="text-[10px] font-bold text-gray-500 uppercase">Kelompok</label>
+                            <input type="text" id="posGroup" class="w-full px-3 py-1.5 border rounded text-sm" placeholder="Nama Group">
                         </div>
                         <div>
-                            <label class="text-xs font-bold text-gray-500 uppercase">PIC / Penanggung Jawab</label>
-                            <input type="text" id="posPic" placeholder="Contoh: Don Billy" class="w-full px-3 py-2 border rounded text-sm focus:ring-2 focus:ring-blue-500">
+                            <label class="text-[10px] font-bold text-gray-500 uppercase">PIC</label>
+                            <input type="text" id="posPic" class="w-full px-3 py-1.5 border rounded text-sm" placeholder="Nama PIC">
                         </div>
                     </div>
                 </div>
-                <div class="p-4 bg-blue-50 border-b border-blue-100"><h3 class="font-bold text-blue-900"><i class="fas fa-shopping-cart mr-2"></i> Keranjang</h3></div>
-                <div class="flex-1 overflow-y-auto p-4 space-y-3" id="cartItems"></div>
-                <div class="p-4 bg-gray-50 border-t border-gray-200 space-y-2">
-                    <div class="flex justify-between items-end border-t border-gray-200 pt-2">
-                        <span class="font-bold text-gray-800 text-lg">Total Tagihan:</span>
-                        <span class="font-bold text-2xl text-blue-600" id="cartTotalSell">Rp 0</span>
+
+                <div class="px-4 py-2 bg-gray-100 border-b border-gray-200 flex justify-between items-center shrink-0">
+                    <h3 class="font-bold text-gray-700"><i class="fas fa-shopping-cart mr-2"></i>Keranjang</h3>
+                    <span class="text-xs text-gray-500" id="cartCountItem">0 Item</span>
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar" id="cartItems">
                     </div>
-                    <button onclick="window.processCheckout()" id="btnCheckout" disabled class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg shadow-lg transition mt-2">Proses Transaksi</button>
+
+                <div class="p-4 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] shrink-0">
+                    <div class="flex justify-between items-end mb-4">
+                        <span class="text-sm font-bold text-gray-500">Total Tagihan:</span>
+                        <span class="text-2xl font-bold text-blue-700 leading-none" id="cartTotalSell">Rp 0</span>
+                    </div>
+                    <button onclick="window.processCheckout()" id="btnCheckout" disabled class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg shadow-lg transition active:scale-95 flex justify-center items-center">
+                        <span>Proses Transaksi</span>
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
                 </div>
             </div>
+
         </div>
-    </div>
     </div>
 
     <div id="productModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black bg-opacity-50 p-4 backdrop-blur-sm">
@@ -585,4 +613,3 @@
     
 </body>
 </html>
-
