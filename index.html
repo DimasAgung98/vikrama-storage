@@ -231,7 +231,6 @@
             </div>
         </div>
     </div>
-
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
         import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
@@ -261,23 +260,23 @@
             auth = getAuth(app);
             db = getFirestore(app);
             
-            // Hapus sesi lama (jika ada yang nyangkut dari versi sebelumnya)
             localStorage.removeItem('vikrama_pin_session'); 
 
             renderLockScreen();
 
             signInAnonymously(auth).then(()=>{
                 document.getElementById('connectionStatus').innerHTML='<span class="text-green-400 font-bold">Online</span>';
-                // Paksa reset tampilan ke inventory agar grid tidak hilang
                 window.switchPage('inventory');
             }).catch(e=>console.error(e));
         }
 
-        // --- FITUR KEAMANAN (SESSION STORAGE) ---
+        // --- FITUR KEAMANAN (LOCK SCREEN + MATA PENGINTIP) ---
         function renderLockScreen() {
             const lockDiv = document.createElement('div');
             lockDiv.id = 'appLockScreen';
             lockDiv.className = 'fixed inset-0 bg-slate-900 z-[100] flex flex-col items-center justify-center p-4';
+            
+            // HTML Lock Screen Baru (Ada Tombol Mata)
             lockDiv.innerHTML = `
                 <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center">
                     <div class="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -285,20 +284,43 @@
                     </div>
                     <h2 class="text-xl font-bold text-gray-800 mb-2">Akses Terbatas</h2>
                     <p class="text-sm text-gray-500 mb-6">Masukkan PIN Akses Vikrama Kulapati</p>
-                    <input type="password" id="pinInput" placeholder="Masukan PIN" class="w-full text-center text-2xl tracking-widest font-bold border-2 border-gray-300 rounded-lg py-3 px-4 mb-4 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition">
+                    
+                    <div class="relative w-full mb-4">
+                        <input type="password" id="pinInput" placeholder="Masukan PIN" 
+                            class="w-full text-center text-2xl tracking-widest font-bold border-2 border-gray-300 rounded-lg py-3 px-4 pr-12 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition">
+                        
+                        <button type="button" id="togglePinVisibility" 
+                            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 p-2 focus:outline-none">
+                            <i class="fas fa-eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+
                     <button id="btnUnlock" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg transition transform active:scale-95">BUKA AKSES</button>
                     <p id="pinError" class="text-red-500 text-xs mt-3 hidden font-bold">PIN Salah!</p>
                 </div>`;
             document.body.appendChild(lockDiv);
 
-            // GANTI DISINI: Cek sessionStorage (bukan localStorage)
-            const savedPin = sessionStorage.getItem('vikrama_pin_session');
-            if(savedPin) {
-                checkPin(savedPin, true);
-            }
+            // LOGIC TOMBOL MATA
+            const pinIn = document.getElementById('pinInput');
+            const toggleBtn = document.getElementById('togglePinVisibility');
+            const eyeIcon = document.getElementById('eyeIcon');
 
-            document.getElementById('btnUnlock').onclick = () => checkPin(document.getElementById('pinInput').value);
-            document.getElementById('pinInput').addEventListener('keypress', (e) => { if(e.key === 'Enter') checkPin(e.target.value); });
+            toggleBtn.onclick = () => {
+                if (pinIn.type === "password") {
+                    pinIn.type = "text"; // Jadi terlihat
+                    eyeIcon.classList.replace('fa-eye', 'fa-eye-slash'); // Ganti ikon mata dicoret
+                } else {
+                    pinIn.type = "password"; // Jadi bintang-bintang
+                    eyeIcon.classList.replace('fa-eye-slash', 'fa-eye'); // Ganti ikon mata biasa
+                }
+            };
+
+            // Cek Session
+            const savedPin = sessionStorage.getItem('vikrama_pin_session');
+            if(savedPin) { checkPin(savedPin, true); }
+
+            document.getElementById('btnUnlock').onclick = () => checkPin(pinIn.value);
+            pinIn.addEventListener('keypress', (e) => { if(e.key === 'Enter') checkPin(e.target.value); });
         }
 
         async function checkPin(inputPin, isAuto = false) {
@@ -307,25 +329,19 @@
             if(btn && !isAuto) { btn.innerText = "Mengecek..."; btn.disabled = true; }
             
             try {
-                // Ambil PIN dari Firebase (security/pin)
                 const docRef = doc(db, 'settings', 'security');
                 const snap = await getDoc(docRef);
-                let correctPin = '123456'; // Default
+                let correctPin = '123456'; 
                 if (snap.exists()) correctPin = snap.data().pin;
 
                 if (inputPin === correctPin) {
-                    // SUKSES
                     if(document.getElementById('appLockScreen')) document.getElementById('appLockScreen').remove();
-                    
-                    // GANTI DISINI: Simpan ke Session (Hilang saat close tab)
                     sessionStorage.setItem('vikrama_pin_session', inputPin); 
-                    
-                    subscribeData(); // Load data hanya jika PIN benar
+                    subscribeData(); 
                     if(!isAuto) showToast("Akses Diterima", "success");
                 } else {
-                    // GAGAL
                     if(isAuto) {
-                        sessionStorage.removeItem('vikrama_pin_session'); // Hapus sesi
+                        sessionStorage.removeItem('vikrama_pin_session'); 
                         if(btn) { btn.innerText = "BUKA AKSES"; btn.disabled = false; }
                     } else {
                         if(err) err.classList.remove('hidden');
@@ -336,7 +352,6 @@
                 }
             } catch (e) {
                 console.error(e);
-                // Fallback jika offline/error: Cek hardcode (Opsional)
                 if(inputPin === '123456') { 
                     if(document.getElementById('appLockScreen')) document.getElementById('appLockScreen').remove();
                     sessionStorage.setItem('vikrama_pin_session', inputPin);
@@ -360,7 +375,6 @@
         }
 
         function renderProducts() {
-            // Anti-Crash & Auto-Hide logic
             const historyView = document.getElementById('historyView');
             const isHistoryOpen = historyView ? !historyView.classList.contains('hidden') : false;
             const grid = document.getElementById('productGrid');
@@ -373,7 +387,6 @@
                 return c && s;
             });
 
-            // Update Stats
             if(document.getElementById('totalProducts')) document.getElementById('totalProducts').innerText = filtered.length;
             const totalModal = filtered.reduce((a, b) => a + ((b.costPrice||0)*b.stock), 0);
             if(document.getElementById('totalCostValue')) document.getElementById('totalCostValue').innerText = 'Rp ' + totalModal.toLocaleString('id-ID');
@@ -569,5 +582,6 @@
         // START
         initApp();
     </script>
+    
 </body>
 </html>
