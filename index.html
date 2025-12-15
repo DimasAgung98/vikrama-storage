@@ -259,13 +259,16 @@
             auth = getAuth(app);
             db = getFirestore(app);
             
-            // Render Lock Screen Dulu
             renderLockScreen();
 
-            // Login Anonymous di Background
             signInAnonymously(auth).then(()=>{
-                document.getElementById('connectionStatus').innerHTML='<span class="text-green-400 font-bold">Terhubung</span>';
-                // Jangan load data dulu sebelum PIN benar (biar aman)
+                document.getElementById('connectionStatus').innerHTML='<span class="text-green-400 font-bold">Online</span>';
+                
+                // --- TAMBAHKAN BARIS INI (PAKSA RESET TAMPILAN) ---
+                window.switchPage('inventory'); 
+                // --------------------------------------------------
+                
+                subscribeData(); // Baru load data
             }).catch(e=>console.error(e));
         }
 
@@ -346,20 +349,40 @@
 
         // --- CORE FUNCTIONS (Sama seperti sebelumnya) ---
         function subscribeData() {
-            onSnapshot(collection(db, 'vikrama_inventory'), (snap) => {
+            // Inventory Listener (DENGAN PENGECUALIAN ERROR)
+            const q = collection(db, 'vikrama_inventory');
+            onSnapshot(q, (snap) => {
                 document.getElementById('loadingState').classList.add('hidden');
+                
+                if (snap.empty) {
+                    console.log("Data Firebase Kosong/Tidak Ditemukan");
+                }
+
                 allProducts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 allProducts.sort((a, b) => (a.name||'').localeCompare(b.name||''));
+                
                 renderProducts();
                 if(!document.getElementById('posModal').classList.contains('hidden')) renderPosProducts();
+            }, (error) => {
+                // INI AKAN MEMUNCULKAN PENYEBABNYA
+                alert("Gagal mengambil data: " + error.message);
+                console.error("Firebase Error:", error);
             });
+
+            // History Listener
             loadHistoryData();
         }
 
+        // --- RENDER PRODUK (VERSI ANTI-CRASH) ---
         function renderProducts() {
+            // 1. Cek Elemen dengan Aman (Pakai tanda tanya ?)
             const historyView = document.getElementById('historyView');
-            const isHistoryOpen = !historyView.classList.contains('hidden');
+            // Jika elemen history tidak ketemu, anggap saja kita sedang di Inventory (false)
+            const isHistoryOpen = historyView ? !historyView.classList.contains('hidden') : false;
+
             const grid = document.getElementById('productGrid');
+            if(!grid) return; // Stop jika grid hilang
+            
             grid.innerHTML = '';
             
             const filtered = allProducts.filter(p => {
@@ -369,21 +392,32 @@
             });
 
             // Update Stats
-            document.getElementById('totalProducts').innerText = filtered.length;
+            if(document.getElementById('totalProducts')) document.getElementById('totalProducts').innerText = filtered.length;
+            
             const totalModal = filtered.reduce((a, b) => a + ((b.costPrice||0)*b.stock), 0);
-            document.getElementById('totalCostValue').innerText = 'Rp ' + totalModal.toLocaleString('id-ID');
+            if(document.getElementById('totalCostValue')) document.getElementById('totalCostValue').innerText = 'Rp ' + totalModal.toLocaleString('id-ID');
+            
             const totalOmzet = filtered.reduce((a, b) => a + ((b.sellingPrice||0)*b.stock), 0);
-            document.getElementById('totalSellValue').innerText = 'Rp ' + totalOmzet.toLocaleString('id-ID');
-            document.getElementById('totalMarginValue').innerText = 'Rp ' + (totalOmzet - totalModal).toLocaleString('id-ID');
+            if(document.getElementById('totalSellValue')) document.getElementById('totalSellValue').innerText = 'Rp ' + totalOmzet.toLocaleString('id-ID');
+            
+            if(document.getElementById('totalMarginValue')) document.getElementById('totalMarginValue').innerText = 'Rp ' + (totalOmzet - totalModal).toLocaleString('id-ID');
 
+            // --- LOGIC TAMPILAN AMAN ---
             if (filtered.length === 0) {
-                document.getElementById('emptyState').classList.remove('hidden');
+                if(document.getElementById('emptyState')) document.getElementById('emptyState').classList.remove('hidden');
                 grid.classList.add('hidden');
             } else {
-                document.getElementById('emptyState').classList.add('hidden');
-                if (isHistoryOpen) grid.classList.add('hidden'); else grid.classList.remove('hidden');
+                if(document.getElementById('emptyState')) document.getElementById('emptyState').classList.add('hidden');
+                
+                // HANYA sembunyikan grid jika history BENAR-BENAR terbuka
+                if (isHistoryOpen) {
+                    grid.classList.add('hidden'); 
+                } else {
+                    grid.classList.remove('hidden'); // Paksa muncul
+                }
             }
 
+            // Render Kartu (Hanya jika TIDAK di history)
             if (!isHistoryOpen) {
                 filtered.forEach(p => {
                     let badge = 'bg-gray-100 text-gray-600';
