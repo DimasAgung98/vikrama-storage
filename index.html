@@ -237,7 +237,9 @@
         import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, getDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-  
+        // ==========================================
+        // ⚠️ PASTE CONFIG FIREBASE ANDA DISINI
+        // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyD9NymFd2G46ipaQXsOUJEZSXqcgNZDUA8",
   authDomain: "vikrama-storage.firebaseapp.com",
@@ -259,22 +261,20 @@
             auth = getAuth(app);
             db = getFirestore(app);
             
+            // Hapus sesi lama (jika ada yang nyangkut dari versi sebelumnya)
+            localStorage.removeItem('vikrama_pin_session'); 
+
             renderLockScreen();
 
             signInAnonymously(auth).then(()=>{
                 document.getElementById('connectionStatus').innerHTML='<span class="text-green-400 font-bold">Online</span>';
-                
-                // --- TAMBAHKAN BARIS INI (PAKSA RESET TAMPILAN) ---
-                window.switchPage('inventory'); 
-                // --------------------------------------------------
-                
-                subscribeData(); // Baru load data
+                // Paksa reset tampilan ke inventory agar grid tidak hilang
+                window.switchPage('inventory');
             }).catch(e=>console.error(e));
         }
 
-        // --- FITUR KEAMANAN (LOCK SCREEN) ---
+        // --- FITUR KEAMANAN (SESSION STORAGE) ---
         function renderLockScreen() {
-            // Buat elemen Lock Screen menutupi seluruh layar
             const lockDiv = document.createElement('div');
             lockDiv.id = 'appLockScreen';
             lockDiv.className = 'fixed inset-0 bg-slate-900 z-[100] flex flex-col items-center justify-center p-4';
@@ -285,24 +285,18 @@
                     </div>
                     <h2 class="text-xl font-bold text-gray-800 mb-2">Akses Terbatas</h2>
                     <p class="text-sm text-gray-500 mb-6">Masukkan PIN Akses Vikrama Kulapati</p>
-                    
                     <input type="password" id="pinInput" placeholder="Masukan PIN" class="w-full text-center text-2xl tracking-widest font-bold border-2 border-gray-300 rounded-lg py-3 px-4 mb-4 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition">
-                    
-                    <button id="btnUnlock" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg transition transform active:scale-95">
-                        BUKA AKSES
-                    </button>
+                    <button id="btnUnlock" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg transition transform active:scale-95">BUKA AKSES</button>
                     <p id="pinError" class="text-red-500 text-xs mt-3 hidden font-bold">PIN Salah!</p>
-                </div>
-            `;
+                </div>`;
             document.body.appendChild(lockDiv);
 
-            // Cek apakah sudah pernah login sebelumnya di browser ini?
-            const savedPin = localStorage.getItem('vikrama_pin_session');
+            // GANTI DISINI: Cek sessionStorage (bukan localStorage)
+            const savedPin = sessionStorage.getItem('vikrama_pin_session');
             if(savedPin) {
-                checkPin(savedPin, true); // Auto login jika ada sesi
+                checkPin(savedPin, true);
             }
 
-            // Event Listeners
             document.getElementById('btnUnlock').onclick = () => checkPin(document.getElementById('pinInput').value);
             document.getElementById('pinInput').addEventListener('keypress', (e) => { if(e.key === 'Enter') checkPin(e.target.value); });
         }
@@ -310,28 +304,28 @@
         async function checkPin(inputPin, isAuto = false) {
             const btn = document.getElementById('btnUnlock');
             const err = document.getElementById('pinError');
-            if(btn) { btn.innerText = "Mengecek..."; btn.disabled = true; }
+            if(btn && !isAuto) { btn.innerText = "Mengecek..."; btn.disabled = true; }
             
             try {
-                // Ambil PIN asli dari Database (Collection: settings, Doc: security)
+                // Ambil PIN dari Firebase (security/pin)
                 const docRef = doc(db, 'settings', 'security');
                 const snap = await getDoc(docRef);
-
-                let correctPin = '123456'; // Default jika database belum disetting
-                if (snap.exists()) {
-                    correctPin = snap.data().pin;
-                }
+                let correctPin = '123456'; // Default
+                if (snap.exists()) correctPin = snap.data().pin;
 
                 if (inputPin === correctPin) {
                     // SUKSES
-                    document.getElementById('appLockScreen').remove();
-                    localStorage.setItem('vikrama_pin_session', inputPin); // Simpan sesi
-                    subscribeData(); // Baru load data inventory setelah jebol
-                    showToast("Akses Diterima", "success");
+                    if(document.getElementById('appLockScreen')) document.getElementById('appLockScreen').remove();
+                    
+                    // GANTI DISINI: Simpan ke Session (Hilang saat close tab)
+                    sessionStorage.setItem('vikrama_pin_session', inputPin); 
+                    
+                    subscribeData(); // Load data hanya jika PIN benar
+                    if(!isAuto) showToast("Akses Diterima", "success");
                 } else {
                     // GAGAL
                     if(isAuto) {
-                        localStorage.removeItem('vikrama_pin_session'); // Hapus sesi invalid
+                        sessionStorage.removeItem('vikrama_pin_session'); // Hapus sesi
                         if(btn) { btn.innerText = "BUKA AKSES"; btn.disabled = false; }
                     } else {
                         if(err) err.classList.remove('hidden');
@@ -342,49 +336,37 @@
                 }
             } catch (e) {
                 console.error(e);
-                alert("Gagal koneksi ke database security.");
-                if(btn) { btn.innerText = "COBA LAGI"; btn.disabled = false; }
+                // Fallback jika offline/error: Cek hardcode (Opsional)
+                if(inputPin === '123456') { 
+                    if(document.getElementById('appLockScreen')) document.getElementById('appLockScreen').remove();
+                    sessionStorage.setItem('vikrama_pin_session', inputPin);
+                    subscribeData();
+                } else {
+                    if(btn) { btn.innerText = "COBA LAGI"; btn.disabled = false; }
+                }
             }
         }
 
-        // --- CORE FUNCTIONS (Sama seperti sebelumnya) ---
+        // --- CORE FUNCTIONS ---
         function subscribeData() {
-            // Inventory Listener (DENGAN PENGECUALIAN ERROR)
-            const q = collection(db, 'vikrama_inventory');
-            onSnapshot(q, (snap) => {
+            onSnapshot(collection(db, 'vikrama_inventory'), (snap) => {
                 document.getElementById('loadingState').classList.add('hidden');
-                
-                if (snap.empty) {
-                    console.log("Data Firebase Kosong/Tidak Ditemukan");
-                }
-
                 allProducts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 allProducts.sort((a, b) => (a.name||'').localeCompare(b.name||''));
-                
                 renderProducts();
                 if(!document.getElementById('posModal').classList.contains('hidden')) renderPosProducts();
-            }, (error) => {
-                // INI AKAN MEMUNCULKAN PENYEBABNYA
-                alert("Gagal mengambil data: " + error.message);
-                console.error("Firebase Error:", error);
             });
-
-            // History Listener
             loadHistoryData();
         }
 
-        // --- RENDER PRODUK (VERSI ANTI-CRASH) ---
         function renderProducts() {
-            // 1. Cek Elemen dengan Aman (Pakai tanda tanya ?)
+            // Anti-Crash & Auto-Hide logic
             const historyView = document.getElementById('historyView');
-            // Jika elemen history tidak ketemu, anggap saja kita sedang di Inventory (false)
             const isHistoryOpen = historyView ? !historyView.classList.contains('hidden') : false;
-
             const grid = document.getElementById('productGrid');
-            if(!grid) return; // Stop jika grid hilang
+            if(!grid) return;
             
             grid.innerHTML = '';
-            
             const filtered = allProducts.filter(p => {
                 const c = currentCategory === 'Semua' || p.category === currentCategory;
                 const s = p.name ? p.name.toLowerCase().includes(searchTerm) : false;
@@ -393,31 +375,20 @@
 
             // Update Stats
             if(document.getElementById('totalProducts')) document.getElementById('totalProducts').innerText = filtered.length;
-            
             const totalModal = filtered.reduce((a, b) => a + ((b.costPrice||0)*b.stock), 0);
             if(document.getElementById('totalCostValue')) document.getElementById('totalCostValue').innerText = 'Rp ' + totalModal.toLocaleString('id-ID');
-            
             const totalOmzet = filtered.reduce((a, b) => a + ((b.sellingPrice||0)*b.stock), 0);
             if(document.getElementById('totalSellValue')) document.getElementById('totalSellValue').innerText = 'Rp ' + totalOmzet.toLocaleString('id-ID');
-            
             if(document.getElementById('totalMarginValue')) document.getElementById('totalMarginValue').innerText = 'Rp ' + (totalOmzet - totalModal).toLocaleString('id-ID');
 
-            // --- LOGIC TAMPILAN AMAN ---
             if (filtered.length === 0) {
                 if(document.getElementById('emptyState')) document.getElementById('emptyState').classList.remove('hidden');
                 grid.classList.add('hidden');
             } else {
                 if(document.getElementById('emptyState')) document.getElementById('emptyState').classList.add('hidden');
-                
-                // HANYA sembunyikan grid jika history BENAR-BENAR terbuka
-                if (isHistoryOpen) {
-                    grid.classList.add('hidden'); 
-                } else {
-                    grid.classList.remove('hidden'); // Paksa muncul
-                }
+                if (isHistoryOpen) grid.classList.add('hidden'); else grid.classList.remove('hidden');
             }
 
-            // Render Kartu (Hanya jika TIDAK di history)
             if (!isHistoryOpen) {
                 filtered.forEach(p => {
                     let badge = 'bg-gray-100 text-gray-600';
@@ -573,7 +544,7 @@
             });
         };
 
-        // Listeners & CRUD
+        // UI Listeners & CRUD
         document.getElementById('searchInput').addEventListener('input',e=>{searchTerm=e.target.value.toLowerCase();renderProducts();});
         document.getElementById('posSearchInput').addEventListener('input',e=>{posSearch=e.target.value.toLowerCase();renderPosProducts();});
         document.getElementById('posCategoryFilter').addEventListener('change',e=>{posCategory=e.target.value;renderPosProducts();});
@@ -588,7 +559,7 @@
         const xl=document.getElementById('excelInput');
         if(xl)xl.addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=async ev=>{try{const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'}),js=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);for(const row of js){const k=Object.keys(row),find=a=>row[k.find(x=>a.some(s=>x.toLowerCase().includes(s)))];await addDoc(collection(db,'vikrama_inventory'),{name:find(['nama','name'])||'Item',category:find(['kat','cat'])||'Aksesoris',stock:parseInt(find(['stok','qty']))||0,costPrice:parseInt(find(['modal','cost']))||0,sellingPrice:parseInt(find(['jual','price']))||0});}document.getElementById('importModal').classList.add('hidden');xl.value='';showToast("Import Sukses","success");}catch(err){alert(err.message);}};r.readAsArrayBuffer(f);});
 
-        // Setup UI
+        // Setup Init
         const nav=document.getElementById('categoryList'), posSel=document.getElementById('posCategoryFilter'), formSel=document.getElementById('category'), mobSel=document.getElementById('mobileCategorySelect');
         CATEGORIES.forEach(c=>{nav.innerHTML+=`<button onclick="window.filterCategory('${c}')" class="w-full text-left px-4 py-2 rounded-lg mb-1 hover:bg-gray-100 text-gray-600">${c}</button>`;posSel.innerHTML+=`<option value="${c}">${c}</option>`;mobSel.innerHTML+=`<option value="${c}">${c}</option>`;if(c!=='Semua')formSel.innerHTML+=`<option value="${c}">${c}</option>`;});
         mobSel.addEventListener('change',e=>window.filterCategory(e.target.value));
