@@ -53,26 +53,9 @@
     <div class="flex flex-1 overflow-hidden">
         <aside class="w-64 bg-white shadow-md overflow-y-auto hidden md:block border-r border-gray-200">
             <div class="p-5 border-b bg-gray-50">
-                <h2 class="font-bold text-gray-700 uppercase text-xs tracking-wider flex items-center">
-                    <i class="fas fa-bars mr-2"></i> Menu Utama
-                </h2>
+                <h2 class="font-bold text-gray-700 uppercase text-xs tracking-wider flex items-center"><i class="fas fa-filter mr-2"></i> Filter Kategori</h2>
             </div>
-            <nav class="mt-2 px-3 pb-4 space-y-1">
-                <button onclick="window.switchPage('inventory')" id="menu-inventory" class="w-full text-left px-4 py-3 rounded-lg transition flex items-center bg-blue-100 text-blue-700 font-bold border-l-4 border-blue-600">
-                    <i class="fas fa-boxes mr-3"></i> Stok Senjata
-                </button>
-                <button onclick="window.switchPage('history')" id="menu-history" class="w-full text-left px-4 py-3 rounded-lg transition flex items-center text-gray-600 hover:bg-gray-100">
-                    <i class="fas fa-history mr-3"></i> Riwayat Transaksi
-                </button>
-            </nav>
-            
-            <div class="p-5 border-b bg-gray-50 mt-4">
-                <h2 class="font-bold text-gray-700 uppercase text-xs tracking-wider flex items-center">
-                    <i class="fas fa-filter mr-2"></i> Filter Kategori
-                </h2>
-            </div>
-            <nav class="mt-2 px-3 pb-4" id="categoryList">
-                </nav>
+            <nav class="mt-2 px-3 pb-4" id="categoryList"></nav>
         </aside>
 
         <main class="flex-1 overflow-y-auto p-4 md:p-8 relative bg-gray-50">
@@ -90,53 +73,24 @@
                     </button>
                 </div>
             </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-600">
-                    <div class="text-gray-500 text-xs font-semibold uppercase">Total Stok</div>
+                    <div class="text-gray-500 text-xs font-semibold uppercase">Total Item</div>
                     <div class="text-2xl font-bold mt-1" id="totalProducts">0</div>
                 </div>
                 <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-yellow-500">
-                    <div class="text-gray-500 text-xs font-semibold uppercase">Aset Gudang</div>
-                    <div class="text-lg font-bold text-yellow-700 mt-1" id="totalCostValue">Rp 0</div>
+                    <div class="text-gray-500 text-xs font-semibold uppercase">Total Modal</div>
+                    <div class="text-2xl font-bold text-yellow-700 mt-1" id="totalCostValue">Rp 0</div>
                 </div>
                 <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-600">
-                    <div class="text-gray-500 text-xs font-semibold uppercase">Potensi Omzet</div>
-                    <div class="text-lg font-bold text-green-700 mt-1" id="totalSellValue">Rp 0</div>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-purple-300">
-                    <div class="text-gray-500 text-xs font-semibold uppercase">Potensi Profit</div>
-                    <div class="text-lg font-bold text-purple-400 mt-1" id="totalMarginValue">Rp 0</div>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-emerald-600 bg-emerald-50">
-                    <div class="text-emerald-800 text-xs font-bold uppercase">Keuntungan CAIR</div>
-                    <div class="text-2xl font-bold text-emerald-700 mt-1" id="realizedProfitValue">Rp 0</div>
-                    <div class="text-[10px] text-emerald-600">Dari transaksi sukses</div>
+                    <div class="text-gray-500 text-xs font-semibold uppercase">Est. Omzet</div>
+                    <div class="text-2xl font-bold text-green-700 mt-1" id="totalSellValue">Rp 0</div>
                 </div>
             </div>
 
             <div id="loadingState" class="flex justify-center items-center h-64"><div class="loading-spinner rounded-full border-4 border-t-4 border-gray-200 h-12 w-12"></div></div>
             <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 hidden"></div>
-            
-            <div id="historyView" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-slate-900 text-white uppercase font-bold text-xs">
-                            <tr>
-                                <th class="px-6 py-4">Tanggal</th>
-                                <th class="px-6 py-4">Kelompok & PIC</th>
-                                <th class="px-6 py-4">Detail Barang</th>
-                                <th class="px-6 py-4 text-right">Total Transaksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="transactionTableBody" class="divide-y divide-gray-200">
-                            </tbody>
-                    </table>
-                </div>
-                <div id="emptyHistory" class="hidden p-10 text-center text-gray-400">
-                    <i class="fas fa-receipt text-4xl mb-3"></i>
-                    <p>Belum ada riwayat transaksi.</p>
-                </div>
-            </div>
             <div id="emptyState" class="hidden flex flex-col items-center justify-center h-64 text-gray-400"><i class="fas fa-crosshairs text-6xl mb-4 opacity-30"></i><p>Tidak ada data.</p></div>
         </main>
     </div>
@@ -155,26 +109,6 @@
                 <div id="posProductGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 overflow-y-auto p-1 pb-20"></div>
             </div>
             <div class="w-full md:w-96 bg-white shadow-xl flex flex-col shrink-0 z-10">
-                
-                <div class="w-full md:w-96 bg-white shadow-xl flex flex-col shrink-0 z-10 border-l border-gray-200">
-                
-                <div class="p-4 bg-gray-100 border-b border-gray-200 space-y-3">
-                    <div>
-                        <label class="text-xs font-bold text-gray-500 uppercase">Tanggal Transaksi</label>
-                        <input type="date" id="posDate" class="w-full px-3 py-2 border rounded font-medium text-gray-700 focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="text-xs font-bold text-gray-500 uppercase">Nama Kelompok</label>
-                            <input type="text" id="posGroup" placeholder="Contoh: Yakuza" class="w-full px-3 py-2 border rounded text-sm focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold text-gray-500 uppercase">PIC / Penanggung Jawab</label>
-                            <input type="text" id="posPic" placeholder="Contoh: Don Billy" class="w-full px-3 py-2 border rounded text-sm focus:ring-2 focus:ring-blue-500">
-                        </div>
-                    </div>
-                </div>
-
                 <div class="p-4 bg-blue-50 border-b border-blue-100"><h3 class="font-bold text-blue-900"><i class="fas fa-shopping-cart mr-2"></i> Keranjang</h3></div>
                 <div class="flex-1 overflow-y-auto p-4 space-y-3" id="cartItems"></div>
                 <div class="p-4 bg-gray-50 border-t border-gray-200 space-y-2">
@@ -237,39 +171,16 @@
             </div>
         </div>
     </div>
-        <div id="editTrxModal" class="fixed inset-0 bg-black bg-opacity-50 z-[70] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm">
-            <div class="p-4 border-b bg-gray-50 rounded-t-xl flex justify-between items-center">
-                <h3 class="font-bold text-gray-800">Edit Info Transaksi</h3>
-                <button onclick="document.getElementById('editTrxModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="p-5 space-y-4">
-                <input type="hidden" id="editTrxId">
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tanggal</label>
-                    <input type="date" id="editTrxDate" class="w-full border rounded px-3 py-2">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Kelompok</label>
-                    <input type="text" id="editTrxGroup" class="w-full border rounded px-3 py-2">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">PIC</label>
-                    <input type="text" id="editTrxPic" class="w-full border rounded px-3 py-2">
-                </div>
-                <button onclick="window.saveEditTrx()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition">Update Data</button>
-            </div>
-        </div>
-    </div>
+
     <script type="module">
-        // 1. IMPORT FIX (Perhatikan bagian ini sudah lengkap ada getDoc, deleteDoc, dll)
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
         import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, getDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-        // ==========================================
-        // KONFIGURASI FIREBASE (WAJIB DIISI ULANG)
-        // ==========================================
+        // =================================================================
+        // AREA INI YANG HARUS ANDA ISI DENGAN KODE DARI FIREBASE
+        // =================================================================
+        
         const firebaseConfig = {
             apiKey: "AIzaSyD9NymFd2G46ipaQXsOUJEZSXqcgNZDUA8",
               authDomain: "vikrama-storage.firebaseapp.com",
@@ -279,27 +190,28 @@
               appId: "1:521669285666:web:b1fce2336db5317795777b"
         };
 
-        // --- GLOBAL VARIABLES ---
+        // =================================================================
+        // JANGAN UBAH KODE DI BAWAH INI KECUALI PAHAM
+        // =================================================================
+
         const CATEGORIES = ['Semua', 'Kelas 1', 'Kelas 2', 'Kelas 3', 'Kelas 4', 'Aksesoris'];
         let db, auth, user;
         let allProducts = [];
         let currentCategory = 'Semua';
-        let searchTerm = '';
-        let posCart = [];
-        let posCategory = 'Semua';
-        let posSearch = '';
+        let searchTerm = '', posCart = [], posCategory = 'Semua', posSearch = '';
 
-        // --- INIT FIREBASE ---
+        // Init Firebase
         function initFirebase() {
             if (!firebaseConfig.apiKey) {
-                alert("ERROR: Config Firebase Belum Diisi di Script!");
+                document.getElementById('connectionStatus').innerHTML = '<span class="text-red-400 font-bold">Config Error</span>';
+                alert("MOHON ISI 'firebaseConfig' DI DALAM CODE HTML TERLEBIH DAHULU!");
                 return;
             }
             try {
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
-                signInAnonymously(auth).catch(e => console.error("Auth Error:", e));
+                signInAnonymously(auth).catch(e => console.error("Auth Err", e));
                 
                 onAuthStateChanged(auth, (u) => {
                     if (u) {
@@ -314,49 +226,33 @@
             } catch (err) { console.error(err); }
         }
 
-        // --- DATA HANDLER ---
         function subscribeData() {
-            // Inventory Subscription
-            onSnapshot(collection(db, 'vikrama_inventory'), (snap) => {
+            // Menggunakan 1 collection utama agar lebih mudah
+            const ref = collection(db, 'vikrama_inventory');
+            onSnapshot(ref, (snap) => {
                 document.getElementById('loadingState').classList.add('hidden');
                 allProducts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 allProducts.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-                
-                // Refresh tampilan sesuai halaman yang aktif
-                const isHistoryActive = !document.getElementById('historyView').classList.contains('hidden');
-                if(!isHistoryActive) renderProducts();
-                
+                renderProducts();
                 if(!document.getElementById('posModal').classList.contains('hidden')) renderPosProducts();
             });
-
-            // History Subscription (Agar Profit Real-time Update)
-            loadHistoryData();
         }
 
-        // --- INVENTORY RENDERER ---
+        // Logic UI (Disederhanakan untuk Vercel/Production)
         function renderProducts() {
             const grid = document.getElementById('productGrid');
             grid.innerHTML = '';
-            
             const filtered = allProducts.filter(p => {
                 const c = currentCategory === 'Semua' || p.category === currentCategory;
                 const s = p.name ? p.name.toLowerCase().includes(searchTerm) : false;
                 return c && s;
             });
 
-            // --- STATISTIK LENGKAP (Update Stats) ---
+            // Update Stats
             document.getElementById('totalProducts').innerText = filtered.length;
-            
-            const totalModal = filtered.reduce((acc, curr) => acc + ((curr.costPrice || 0) * curr.stock), 0);
-            document.getElementById('totalCostValue').innerText = 'Rp ' + totalModal.toLocaleString('id-ID');
+            document.getElementById('totalCostValue').innerText = 'Rp ' + filtered.reduce((a, b) => a + ((b.costPrice||0)*b.stock), 0).toLocaleString('id-ID');
+            document.getElementById('totalSellValue').innerText = 'Rp ' + filtered.reduce((a, b) => a + ((b.sellingPrice||0)*b.stock), 0).toLocaleString('id-ID');
 
-            const totalOmzet = filtered.reduce((acc, curr) => acc + ((curr.sellingPrice || 0) * curr.stock), 0);
-            document.getElementById('totalSellValue').innerText = 'Rp ' + totalOmzet.toLocaleString('id-ID');
-
-            const totalMargin = totalOmzet - totalModal;
-            document.getElementById('totalMarginValue').innerText = 'Rp ' + totalMargin.toLocaleString('id-ID');
-
-            // Empty State
             if (filtered.length === 0) {
                 document.getElementById('emptyState').classList.remove('hidden');
                 grid.classList.add('hidden');
@@ -365,14 +261,12 @@
                 grid.classList.remove('hidden');
             }
 
-            // Render Card
             filtered.forEach(p => {
                 let badge = 'bg-gray-100 text-gray-600';
                 if(p.category?.includes('1')) badge='bg-red-100 text-red-600';
                 if(p.category?.includes('2')) badge='bg-orange-100 text-orange-600';
                 if(p.category?.includes('3')) badge='bg-yellow-100 text-yellow-600';
                 if(p.category?.includes('4')) badge='bg-blue-100 text-blue-600';
-                if(p.category === 'Aksesoris') badge='bg-purple-100 text-purple-600';
 
                 const card = document.createElement('div');
                 card.className = 'bg-white rounded-xl shadow-sm border border-gray-200 p-5 card-hover relative group flex flex-col justify-between';
@@ -381,407 +275,192 @@
                         <div class="flex justify-between items-start mb-2">
                             <span class="text-[10px] uppercase font-bold px-2 py-1 rounded-full ${badge}">${p.category}</span>
                             <div class="opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onclick="window.editProduct('${p.id}')" class="text-blue-500 mr-2 hover:text-blue-700"><i class="fas fa-edit"></i></button>
-                                <button onclick="window.deleteProduct('${p.id}')" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                                <button onclick="window.editProduct('${p.id}')" class="text-blue-500 mr-2"><i class="fas fa-edit"></i></button>
+                                <button onclick="window.deleteProduct('${p.id}')" class="text-red-500"><i class="fas fa-trash"></i></button>
                             </div>
                         </div>
-                        <h3 class="font-bold text-gray-800 mb-2 leading-tight">${p.name}</h3>
-                        <div class="bg-gray-50 p-2 rounded border border-gray-100 mb-3">
-                             <div class="flex justify-between text-xs mb-1 text-gray-500"><span>Modal:</span><span>Rp ${(p.costPrice||0).toLocaleString('id-ID')}</span></div>
-                             <div class="flex justify-between font-bold text-green-700 text-sm"><span>Jual:</span><span>Rp ${(p.sellingPrice||0).toLocaleString('id-ID')}</span></div>
-                        </div>
+                        <h3 class="font-bold text-gray-800 mb-2">${p.name}</h3>
+                        <div class="flex justify-between text-xs mb-1"><span>Modal:</span><span>Rp ${(p.costPrice||0).toLocaleString('id-ID')}</span></div>
+                        <div class="flex justify-between font-bold text-green-700 text-sm"><span>Jual:</span><span>Rp ${(p.sellingPrice||0).toLocaleString('id-ID')}</span></div>
                     </div>
-                    <div class="flex items-center justify-between pt-3 border-t">
+                    <div class="flex items-center justify-between pt-3 border-t mt-3">
                         <div class="text-xs text-gray-500 uppercase font-semibold">Stok</div>
                         <div class="flex items-center">
-                            <button onclick="window.updateStock('${p.id}', -1)" class="w-7 h-7 bg-gray-200 rounded-full font-bold hover:bg-gray-300 transition">-</button>
-                            <span class="mx-2 font-mono font-bold w-6 text-center">${p.stock}</span>
-                            <button onclick="window.updateStock('${p.id}', 1)" class="w-7 h-7 bg-blue-100 text-blue-700 rounded-full font-bold hover:bg-blue-200 transition">+</button>
+                            <button onclick="window.updateStock('${p.id}', -1)" class="w-7 h-7 bg-gray-200 rounded-full font-bold hover:bg-gray-300">-</button>
+                            <span class="mx-2 font-mono font-bold">${p.stock}</span>
+                            <button onclick="window.updateStock('${p.id}', 1)" class="w-7 h-7 bg-blue-100 text-blue-700 rounded-full font-bold hover:bg-blue-200">+</button>
                         </div>
                     </div>`;
                 grid.appendChild(card);
             });
         }
 
-        // --- HISTORY & PROFIT LOGIC ---
-        function loadHistoryData() {
-            const tbody = document.getElementById('transactionTableBody');
-            if(!tbody) return;
-            
-            // Subscribe ke transaksi
-            onSnapshot(collection(db, 'vikrama_transactions'), (snapshot) => {
-                const transactions = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
-                // Sort Tanggal (Terbaru di atas)
-                transactions.sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+        // --- CRUD & POS Functions attached to window ---
+        window.updateStock = async (id, val) => {
+            const p = allProducts.find(x => x.id === id);
+            if(p) {
+                const n = (p.stock || 0) + val;
+                if(n >= 0) await updateDoc(doc(db, 'vikrama_inventory', id), { stock: n });
+            }
+        };
 
-                // --- HITUNG PROFIT REAL (KEUNTUNGAN CAIR) ---
-                let totalRealizedProfit = 0;
-                transactions.forEach(trx => {
-                    // Logic Profit: Jika totalProfit sudah tersimpan (data baru), pakai itu.
-                    // Jika data lama (tidak ada totalProfit), coba hitung manual.
-                    let profit = 0;
-                    if (trx.totalProfit !== undefined) {
-                        profit = trx.totalProfit;
-                    } else {
-                        // Fallback untuk data lama (Mungkin tidak akurat karena modal dianggap 0 jika tidak ada)
-                        profit = trx.totalPrice - (trx.totalCost || 0);
-                    }
-                    totalRealizedProfit += profit;
-                });
-                
-                const profitEl = document.getElementById('realizedProfitValue');
-                if(profitEl) profitEl.innerText = 'Rp ' + totalRealizedProfit.toLocaleString('id-ID');
+        // Form Submit
+        document.getElementById('productForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('productId').value;
+            const data = {
+                name: document.getElementById('name').value,
+                category: document.getElementById('category').value,
+                stock: parseInt(document.getElementById('stock').value) || 0,
+                costPrice: parseInt(document.getElementById('costPrice').value) || 0,
+                sellingPrice: parseInt(document.getElementById('sellingPrice').value) || 0
+            };
+            try {
+                if(id) await updateDoc(doc(db, 'vikrama_inventory', id), data);
+                else await addDoc(collection(db, 'vikrama_inventory'), data);
+                window.closeModal();
+                showToast("Berhasil disimpan", "success");
+            } catch(err) { showToast("Gagal simpan", "error"); }
+        });
 
-                // Render Tabel (Hanya jika sedang di tab History)
-                if (document.getElementById('historyView').classList.contains('hidden')) return;
-
-                tbody.innerHTML = '';
-                if (transactions.length === 0) {
-                    document.getElementById('emptyHistory').classList.remove('hidden');
-                    return;
-                }
-                document.getElementById('emptyHistory').classList.add('hidden');
-
-                transactions.forEach(trx => {
-                    const itemsSummary = trx.items.map(i => `<span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-bold mr-1 border">${i.name} (${i.qty})</span>`).join(' ');
-                    const profitDisplay = (trx.totalProfit !== undefined) ? trx.totalProfit : (trx.totalPrice - (trx.totalCost||0));
-                    
-                    const row = `
-                        <tr class="hover:bg-gray-50 transition border-b group">
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-600 align-top">
-                                <div class="font-bold text-sm">${trx.date}</div>
-                            </td>
-                            <td class="px-6 py-4 align-top">
-                                <div class="font-bold text-gray-800 text-sm">${trx.groupName || '-'}</div>
-                                <div class="text-xs text-gray-500"><i class="fas fa-user mr-1"></i> ${trx.picName || '-'}</div>
-                            </td>
-                            <td class="px-6 py-4 align-top">
-                                <div class="flex flex-wrap gap-1 mb-1">${itemsSummary}</div>
-                            </td>
-                            <td class="px-6 py-4 text-right align-top">
-                                <div class="font-bold text-green-700 text-sm">Rp ${trx.totalPrice.toLocaleString('id-ID')}</div>
-                                <div class="text-[10px] text-emerald-600 font-bold bg-emerald-50 inline-block px-1 rounded border border-emerald-100 mt-1">
-                                    + Rp ${profitDisplay.toLocaleString('id-ID')}
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 text-right align-top opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onclick="window.openEditTrx('${trx.id}')" class="text-blue-500 hover:text-blue-700 mx-1 bg-blue-50 p-2 rounded"><i class="fas fa-pen"></i></button>
-                                <button onclick="window.deleteTrx('${trx.id}')" class="text-red-500 hover:text-red-700 mx-1 bg-red-50 p-2 rounded"><i class="fas fa-trash"></i></button>
-                            </td>
-                        </tr>
-                    `;
-                    tbody.innerHTML += row;
-                });
+        // Global functions for HTML access
+        window.openModal = () => {
+            document.getElementById('productForm').reset();
+            document.getElementById('productId').value = '';
+            document.getElementById('modalTitle').innerText = 'Tambah Data';
+            document.getElementById('productModal').classList.remove('hidden');
+        };
+        window.closeModal = () => document.getElementById('productModal').classList.add('hidden');
+        window.editProduct = (id) => {
+            const p = allProducts.find(x => x.id === id);
+            if(!p) return;
+            document.getElementById('productId').value = p.id;
+            document.getElementById('name').value = p.name;
+            document.getElementById('category').value = p.category;
+            document.getElementById('stock').value = p.stock;
+            document.getElementById('costPrice').value = p.costPrice;
+            document.getElementById('sellingPrice').value = p.sellingPrice;
+            document.getElementById('modalTitle').innerText = 'Edit Data';
+            document.getElementById('productModal').classList.remove('hidden');
+        };
+        window.deleteProduct = (id) => {
+            window.showConfirm('Hapus data ini?', async (yes) => {
+                if(yes) await deleteDoc(doc(db, 'vikrama_inventory', id));
             });
+        };
+
+        // UI & Filter
+        window.filterCategory = (c) => {
+            currentCategory = c;
+            renderProducts();
+            document.getElementById('pageTitle').innerText = c;
+        };
+        document.getElementById('searchInput').addEventListener('input', (e) => { searchTerm = e.target.value.toLowerCase(); renderProducts(); });
+
+        // Setup Categories
+        const nav = document.getElementById('categoryList');
+        const catSel = document.getElementById('category');
+        const mobSel = document.getElementById('mobileCategorySelect');
+        const posSel = document.getElementById('posCategoryFilter');
+        
+        CATEGORIES.forEach(c => {
+            nav.innerHTML += `<button onclick="window.filterCategory('${c}')" class="w-full text-left px-4 py-2 rounded-lg mb-1 hover:bg-gray-100 text-gray-600">${c}</button>`;
+            mobSel.innerHTML += `<option value="${c}">${c}</option>`;
+            posSel.innerHTML += `<option value="${c}">${c}</option>`;
+            if(c !== 'Semua') catSel.innerHTML += `<option value="${c}">${c}</option>`;
+        });
+        mobSel.addEventListener('change', (e) => window.filterCategory(e.target.value));
+
+        // Toast Helper
+        function showToast(msg, type) {
+            const el = document.createElement('div');
+            el.className = `toast ${type === 'success' ? 'toast-success' : 'toast-error'}`;
+            el.innerText = msg;
+            document.getElementById('toast-container').appendChild(el);
+            setTimeout(() => el.remove(), 3000);
         }
 
-        // --- POS SYSTEM & CHECKOUT ---
-        window.openPOS = () => {
-            document.getElementById('posModal').classList.remove('hidden');
-            document.getElementById('posDate').valueAsDate = new Date(); // Auto date hari ini
-            posCart = []; renderCart(); renderPosProducts();
+        // Confirm Helper
+        let confirmCb;
+        window.showConfirm = (msg, cb) => {
+            document.getElementById('confirmMessage').innerText = msg;
+            document.getElementById('confirmationModal').classList.remove('hidden');
+            confirmCb = cb;
         };
-        window.closePOS = () => { if(posCart.length>0) window.showConfirm("Batalkan?",(y)=>{if(y)document.getElementById('posModal').classList.add('hidden')}); else document.getElementById('posModal').classList.add('hidden'); };
+        window.confirmYes = () => { document.getElementById('confirmationModal').classList.add('hidden'); if(confirmCb) confirmCb(true); };
+        window.confirmNo = () => { document.getElementById('confirmationModal').classList.add('hidden'); if(confirmCb) confirmCb(false); };
 
+        // POS & Cart Logic
+        window.openPOS = () => { document.getElementById('posModal').classList.remove('hidden'); posCart=[]; renderCart(); renderPosProducts(); };
+        window.closePOS = () => { if(posCart.length > 0) window.showConfirm("Batalkan?", (y)=>{if(y) document.getElementById('posModal').classList.add('hidden')}); else document.getElementById('posModal').classList.add('hidden'); };
+        
         window.addToCart = (id) => {
             const p = allProducts.find(x => x.id === id);
             if(!p || p.stock <= 0) return showToast("Stok Habis!", "error");
-            
             const exist = posCart.find(x => x.id === id);
-            if(exist) { 
-                if(exist.qty < p.stock) exist.qty++; 
-                else showToast("Stok Maksimal!", "error"); 
-            } else { 
-                // PENTING: Disini kita simpan costPrice (Modal) ke keranjang
-                // Agar nanti perhitungan profit akurat
-                posCart.push({ 
-                    id: p.id, 
-                    name: p.name, 
-                    price: p.sellingPrice || 0, 
-                    cost: p.costPrice || 0, // Pastikan modal tersimpan
-                    qty: 1, 
-                    max: p.stock 
-                }); 
-            }
+            if(exist) { if(exist.qty < p.stock) exist.qty++; else showToast("Stok max!", "error"); }
+            else posCart.push({ id: p.id, name: p.name, price: p.sellingPrice, cost: p.costPrice, qty: 1, max: p.stock });
             renderCart();
         };
-
         window.removeFromCart = (id) => { posCart = posCart.filter(x => x.id !== id); renderCart(); };
         window.updateCartQty = (id, v) => {
             const item = posCart.find(x => x.id === id);
             if(!item) return;
             const n = item.qty + v;
-            if(n > item.max) return showToast("Stok Limit!", "error");
-            if(n <= 0) window.removeFromCart(id); else { item.qty = n; renderCart(); }
+            if(n > item.max) return showToast("Max Stok", "error");
+            if(n <= 0) window.removeFromCart(id);
+            else { item.qty = n; renderCart(); }
         };
 
         function renderPosProducts() {
             const grid = document.getElementById('posProductGrid'); grid.innerHTML = '';
             allProducts.filter(p => (posCategory==='Semua'||p.category===posCategory) && (p.name||'').toLowerCase().includes(posSearch) && p.stock > 0)
             .forEach(p => {
-                grid.innerHTML += `<div onclick="window.addToCart('${p.id}')" class="bg-white border rounded p-3 cursor-pointer hover:border-blue-500 pos-item-hover shadow-sm transition">
-                    <div class="text-[10px] bg-gray-100 text-gray-600 inline px-1 rounded font-bold">${p.category}</div>
-                    <div class="font-bold text-sm my-1 leading-tight text-gray-800">${p.name}</div>
-                    <div class="flex justify-between text-xs text-gray-500 mt-2"><span>Stok: ${p.stock}</span><span class="font-bold text-green-700">Rp ${(p.sellingPrice||0).toLocaleString('id-ID')}</span></div>
+                grid.innerHTML += `<div onclick="window.addToCart('${p.id}')" class="bg-white border rounded p-3 cursor-pointer hover:border-blue-500">
+                    <div class="text-xs bg-gray-100 inline px-1 rounded">${p.category}</div>
+                    <div class="font-bold text-sm my-1">${p.name}</div>
+                    <div class="flex justify-between text-xs text-gray-500"><span>Stok: ${p.stock}</span><span class="font-bold text-green-700">Rp ${(p.sellingPrice||0).toLocaleString('id-ID')}</span></div>
                 </div>`;
             });
         }
-
         function renderCart() {
             const c = document.getElementById('cartItems'); c.innerHTML = '';
             let t = 0;
-            if(posCart.length === 0) {
-                c.innerHTML = '<div class="text-center text-gray-400 mt-10"><i class="fas fa-basket-shopping text-4xl mb-2 opacity-30"></i><p>Pilih produk</p></div>';
-                document.getElementById('btnCheckout').disabled = true;
-                document.getElementById('cartTotalSell').innerText = 'Rp 0';
-                return;
-            }
             posCart.forEach(i => {
                 t += i.price * i.qty;
-                c.innerHTML += `<div class="flex justify-between items-center bg-gray-50 p-2 rounded mb-2 border border-gray-200">
-                    <div class="flex-1"><div class="font-bold text-sm text-gray-800">${i.name}</div><div class="text-xs text-gray-500">@ ${i.price.toLocaleString()}</div></div>
-                    <div class="flex items-center mx-2 gap-2"><button onclick="window.updateCartQty('${i.id}',-1)" class="bg-gray-200 w-6 h-6 rounded font-bold hover:bg-gray-300">-</button><span class="font-bold text-sm w-4 text-center">${i.qty}</span><button onclick="window.updateCartQty('${i.id}',1)" class="bg-blue-100 text-blue-600 w-6 h-6 rounded font-bold hover:bg-blue-200">+</button></div>
-                    <div class="text-right text-sm font-bold text-gray-800">Rp ${(i.price*i.qty).toLocaleString()} <div onclick="window.removeFromCart('${i.id}')" class="text-red-400 text-[10px] cursor-pointer hover:text-red-600">Hapus</div></div>
+                c.innerHTML += `<div class="flex justify-between items-center bg-gray-50 p-2 rounded mb-2 border">
+                    <div class="flex-1"><div class="font-bold text-sm">${i.name}</div><div class="text-xs text-gray-500">@ ${i.price.toLocaleString()}</div></div>
+                    <div class="flex items-center mx-2 gap-2"><button onclick="window.updateCartQty('${i.id}',-1)" class="bg-gray-200 w-6 rounded">-</button><span class="font-bold text-sm">${i.qty}</span><button onclick="window.updateCartQty('${i.id}',1)" class="bg-blue-100 text-blue-600 w-6 rounded">+</button></div>
+                    <div class="text-right text-sm font-bold">Rp ${(i.price*i.qty).toLocaleString()} <div onclick="window.removeFromCart('${i.id}')" class="text-red-400 text-xs cursor-pointer font-normal">Hapus</div></div>
                 </div>`;
             });
             document.getElementById('cartTotalSell').innerText = 'Rp ' + t.toLocaleString('id-ID');
-            document.getElementById('btnCheckout').disabled = false;
+            document.getElementById('btnCheckout').disabled = posCart.length === 0;
         }
-
-        // --- CHECKOUT PROCESS (CORE LOGIC PROFIT) ---
+        
         window.processCheckout = () => {
-            const dateVal = document.getElementById('posDate').value;
-            const groupVal = document.getElementById('posGroup').value;
-            const picVal = document.getElementById('posPic').value;
-
-            if(!dateVal || !groupVal || !picVal) { showToast("Lengkapi data transaksi (Tgl, Kelompok, PIC)!", "error"); return; }
-
-            window.showConfirm("Proses transaksi ini?", async (y) => {
+            window.showConfirm("Proses transaksi?", async (y) => {
                 if(!y) return;
                 const btn = document.getElementById('btnCheckout'); btn.disabled = true; btn.innerText = "Memproses...";
-                
                 try {
-                    let totalSell = 0;
-                    let totalCost = 0; // Variabel penampung modal
-                    
                     for(const i of posCart) {
-                        // 1. Update Stok
                         const p = allProducts.find(x => x.id === i.id);
-                        if(p) {
-                            const newStock = Math.max(0, p.stock - i.qty);
-                            await updateDoc(doc(db, 'vikrama_inventory', i.id), { stock: newStock });
-                        }
-                        // 2. Hitung Total
-                        totalSell += (i.price * i.qty);
-                        totalCost += (i.cost * i.qty); // Modal dihitung dari data yang tersimpan di cart
+                        if(p) await updateDoc(doc(db, 'vikrama_inventory', i.id), { stock: Math.max(0, p.stock - i.qty) });
                     }
-
-                    // 3. Simpan Transaksi dengan Data Profit Lengkap
-                    await addDoc(collection(db, 'vikrama_transactions'), {
-                        date: dateVal,
-                        groupName: groupVal,
-                        picName: picVal,
-                        items: posCart.map(i => ({ name: i.name, qty: i.qty, price: i.price, cost: i.cost })), // Simpan detail modal per item juga
-                        totalPrice: totalSell,
-                        totalCost: totalCost,      // Modal Total
-                        totalProfit: totalSell - totalCost, // Profit Bersih (Fix Isu Angka Aneh)
-                        createdAt: new Date().toISOString()
-                    });
-
-                    posCart = []; renderCart(); 
-                    document.getElementById('posModal').classList.add('hidden');
-                    showToast("Transaksi Berhasil!", "success");
-
-                } catch(e) { console.error(e); showToast("Gagal memproses", "error"); }
-                finally { btn.disabled = false; btn.innerHTML = 'Proses Transaksi'; }
+                    posCart = []; renderCart(); showToast("Transaksi Berhasil", "success");
+                } catch(e) { console.error(e); showToast("Gagal", "error"); }
+                finally { btn.disabled = false; btn.innerText = "Proses Transaksi"; }
             });
         };
 
-        // --- CRUD HISTORY (FIX TOMBOL UPDATE & DELETE) ---
-        
-        // 1. DELETE TRANSACTION
-        window.deleteTrx = (id) => {
-            // Karena getDoc sudah di-import, fungsi ini sekarang akan berjalan normal
-            window.showConfirm("Hapus? Stok barang akan dikembalikan ke gudang.", async (y) => {
-                if(!y) return;
-                try {
-                    const ref = doc(db, 'vikrama_transactions', id);
-                    const snap = await getDoc(ref);
-                    if(!snap.exists()) return;
-                    const data = snap.data();
-
-                    // Balikin Stok
-                    for(const item of data.items) {
-                        const product = allProducts.find(p => p.name === item.name); // Cari by nama
-                        if(product) {
-                            await updateDoc(doc(db, 'vikrama_inventory', product.id), {
-                                stock: (product.stock || 0) + item.qty
-                            });
-                        }
-                    }
-                    await deleteDoc(ref);
-                    showToast("Dihapus & Stok Kembali", "success");
-                } catch(e) { console.error(e); showToast("Gagal hapus", "error"); }
-            });
-        };
-
-        // 2. EDIT TRANSACTION (Buka Modal)
-        window.openEditTrx = (id) => {
-            const ref = doc(db, 'vikrama_transactions', id);
-            getDoc(ref).then(snap => {
-                if(snap.exists()){
-                    const d = snap.data();
-                    document.getElementById('editTrxId').value = id;
-                    document.getElementById('editTrxDate').value = d.date;
-                    document.getElementById('editTrxGroup').value = d.groupName;
-                    document.getElementById('editTrxPic').value = d.picName;
-                    document.getElementById('editTrxModal').classList.remove('hidden');
-                }
-            }).catch(e => console.error(e));
-        };
-
-        // 3. SAVE EDIT
-        window.saveEditTrx = async () => {
-            const id = document.getElementById('editTrxId').value;
-            try {
-                await updateDoc(doc(db, 'vikrama_transactions', id), {
-                    date: document.getElementById('editTrxDate').value,
-                    groupName: document.getElementById('editTrxGroup').value,
-                    picName: document.getElementById('editTrxPic').value
-                });
-                document.getElementById('editTrxModal').classList.add('hidden');
-                showToast("Data Diupdate", "success");
-            } catch(e) { showToast("Gagal update", "error"); }
-        };
-
-        // --- HELPER & UI FUNCTIONS ---
-        window.switchPage = (page) => {
-            if(page === 'inventory') {
-                document.getElementById('menu-inventory').classList.replace('text-gray-600', 'bg-blue-100');
-                document.getElementById('menu-inventory').classList.add('text-blue-700', 'border-l-4', 'border-blue-600');
-                document.getElementById('menu-history').className = "w-full text-left px-4 py-3 rounded-lg transition flex items-center text-gray-600 hover:bg-gray-100";
-                
-                document.getElementById('productGrid').classList.remove('hidden');
-                document.getElementById('historyView').classList.add('hidden');
-                document.getElementById('pageTitle').innerText = "Stok Senjata";
-                document.querySelector('.grid.grid-cols-1.sm\\:grid-cols-2').classList.remove('hidden');
-                renderProducts();
-            } else {
-                document.getElementById('menu-history').classList.replace('text-gray-600', 'bg-purple-100');
-                document.getElementById('menu-history').classList.add('text-purple-700', 'border-l-4', 'border-purple-600');
-                document.getElementById('menu-inventory').className = "w-full text-left px-4 py-3 rounded-lg transition flex items-center text-gray-600 hover:bg-gray-100";
-
-                document.getElementById('productGrid').classList.add('hidden');
-                document.getElementById('historyView').classList.remove('hidden');
-                document.getElementById('pageTitle').innerText = "Riwayat Transaksi";
-                document.querySelector('.grid.grid-cols-1.sm\\:grid-cols-2').classList.add('hidden'); // Hide stats stok
-                document.getElementById('emptyState').classList.add('hidden');
-                loadHistoryData(); // Reload history
-            }
-        };
-
-        window.filterCategory = (c) => { currentCategory = c; renderProducts(); document.getElementById('pageTitle').innerText = c; };
-        
-        // Setup Form & Listeners
-        document.getElementById('searchInput').addEventListener('input', (e)=>{ searchTerm=e.target.value.toLowerCase(); renderProducts(); });
+        // Search POS Listeners
         document.getElementById('posSearchInput').addEventListener('input', (e)=>{ posSearch=e.target.value.toLowerCase(); renderPosProducts(); });
         document.getElementById('posCategoryFilter').addEventListener('change', (e)=>{ posCategory=e.target.value; renderPosProducts(); });
-        
-        document.getElementById('productForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('productId').value;
-            const d = {
-                name: document.getElementById('name').value,
-                category: document.getElementById('category').value,
-                stock: parseInt(document.getElementById('stock').value)||0,
-                costPrice: parseInt(document.getElementById('costPrice').value)||0,
-                sellingPrice: parseInt(document.getElementById('sellingPrice').value)||0
-            };
-            try {
-                if(id) await updateDoc(doc(db, 'vikrama_inventory', id), d);
-                else await addDoc(collection(db, 'vikrama_inventory'), d);
-                window.closeModal(); showToast("Disimpan", "success");
-            } catch(e) { showToast("Gagal", "error"); }
-        });
 
-        // Setup Category Buttons
-        const nav = document.getElementById('categoryList');
-        const posSel = document.getElementById('posCategoryFilter');
-        const formSel = document.getElementById('category');
-        const mobSel = document.getElementById('mobileCategorySelect');
-        CATEGORIES.forEach(c => {
-            nav.innerHTML += `<button onclick="window.filterCategory('${c}')" class="w-full text-left px-4 py-2 rounded-lg mb-1 hover:bg-gray-100 text-gray-600 transition">${c}</button>`;
-            posSel.innerHTML += `<option value="${c}">${c}</option>`;
-            mobSel.innerHTML += `<option value="${c}">${c}</option>`;
-            if(c!=='Semua') formSel.innerHTML += `<option value="${c}">${c}</option>`;
-        });
-        mobSel.addEventListener('change', (e)=>window.filterCategory(e.target.value));
-
-        // Toast & Modal Helpers
-        function showToast(m, t) {
-            const d = document.createElement('div'); d.className=`toast ${t==='success'?'toast-success':'toast-error'}`; d.innerText=m;
-            document.getElementById('toast-container').appendChild(d); setTimeout(()=>d.remove(),3000);
-        }
-        let cfm; window.showConfirm=(m,c)=>{document.getElementById('confirmMessage').innerText=m;document.getElementById('confirmationModal').classList.remove('hidden');cfm=c;};
-        window.confirmYes=()=>{document.getElementById('confirmationModal').classList.add('hidden');if(cfm)cfm(true);};
-        window.confirmNo=()=>{document.getElementById('confirmationModal').classList.add('hidden');if(cfm)cfm(false);};
-        window.openModal=()=>{document.getElementById('productForm').reset();document.getElementById('productId').value='';document.getElementById('modalTitle').innerText='Tambah Data';document.getElementById('productModal').classList.remove('hidden');};
-        window.closeModal=()=>{document.getElementById('productModal').classList.add('hidden');};
-        
-        window.editProduct=(id)=>{
-            const p=allProducts.find(x=>x.id===id); if(!p)return;
-            document.getElementById('productId').value=p.id;
-            document.getElementById('name').value=p.name;
-            document.getElementById('category').value=p.category;
-            document.getElementById('stock').value=p.stock;
-            document.getElementById('costPrice').value=p.costPrice;
-            document.getElementById('sellingPrice').value=p.sellingPrice;
-            document.getElementById('modalTitle').innerText='Edit Data';
-            document.getElementById('productModal').classList.remove('hidden');
-        };
-        
-        window.deleteProduct=(id)=>{window.showConfirm("Hapus item ini?",async(y)=>{if(y)await deleteDoc(doc(db,'vikrama_inventory',id));});};
-        window.updateStock=async(id,v)=>{const p=allProducts.find(x=>x.id===id);if(p){const n=(p.stock||0)+v;if(n>=0)await updateDoc(doc(db,'vikrama_inventory',id),{stock:n});}};
-
-        // EXCEL IMPORT LOGIC (FINAL)
-        const xl = document.getElementById('excelInput');
-        if(xl) {
-            xl.addEventListener('change', async (e) => {
-                const f = e.target.files[0]; if(!f)return;
-                const st = document.getElementById('importStatus'); st.classList.remove('hidden'); st.innerHTML='Reading...';
-                const r = new FileReader();
-                r.onload = async (ev) => {
-                    try {
-                        const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
-                        const js = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-                        st.innerHTML=`Uploading ${js.length} items...`;
-                        for(const row of js) {
-                            const keys = Object.keys(row);
-                            const find = (arr) => { const k = keys.find(key => arr.some(s => key.toLowerCase().includes(s))); return k ? row[k] : null; };
-                            
-                            await addDoc(collection(db, 'vikrama_inventory'), {
-                                name: find(['nama','name','item']) || 'Item Baru',
-                                category: find(['kategori','cat','class']) || 'Aksesoris',
-                                stock: parseInt(find(['stok','stock','qty'])) || 0,
-                                costPrice: parseInt(find(['modal','cost','beli'])) || 0,
-                                sellingPrice: parseInt(find(['jual','sell','price','harga'])) || 0
-                            });
-                        }
-                        st.innerHTML='<span class="text-green-600 font-bold">Done!</span>';
-                        setTimeout(()=>{document.getElementById('importModal').classList.add('hidden');xl.value='';st.innerHTML='';},2000);
-                    } catch(err) { st.innerHTML='Error: '+err.message; }
-                };
-                r.readAsArrayBuffer(f);
-            });
-        }
-
-        // Start App
+        // Jalankan
         initFirebase();
+
     </script>
 </body>
 
 </html>
-
-
-
-
