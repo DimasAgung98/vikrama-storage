@@ -120,6 +120,7 @@
                                 <th class="px-6 py-4">Kelompok & PIC</th>
                                 <th class="px-6 py-4">Detail Barang</th>
                                 <th class="px-6 py-4 text-right">Total Transaksi</th>
+                                <th class="px-6 py-4 text-right">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="transactionTableBody" class="divide-y divide-gray-200">
@@ -234,7 +235,7 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
         import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, getDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
         // =================================================================
         // CONFIG
@@ -578,47 +579,54 @@
 
         function loadHistoryData() {
             const tbody = document.getElementById('transactionTableBody');
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4"><div class="loading-spinner h-6 w-6 mx-auto rounded-full border-2 border-t-2 border-gray-300"></div></td></tr>';
+            
+            // Subscribe ke database
+            onSnapshot(collection(db, 'vikrama_transactions'), (snapshot) => {
+                
+                // PERBAIKAN PENTING DISINI: Mengambil ID dokumen
+                const transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // Sortir Tanggal (Terbaru di atas)
+                transactions.sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
 
-            const q = collection(db, 'vikrama_transactions');
-            historyUnsubscribe = onSnapshot(q, (snapshot) => {
-                const transactions = snapshot.docs.map(doc => doc.data());
-                transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
-
+                // Render Tabel
                 tbody.innerHTML = '';
                 if (transactions.length === 0) {
-                    document.getElementById('emptyHistory').classList.remove('hidden');
+                    // Tampilkan pesan kosong jika tidak ada data
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center p-8 text-gray-400">Belum ada riwayat transaksi.</td></tr>';
                     return;
                 }
-                document.getElementById('emptyHistory').classList.add('hidden');
 
                 transactions.forEach(trx => {
-                    let itemsSummary = '';
-                    if(trx.items && Array.isArray(trx.items)) {
-                        itemsSummary = trx.items.map(i => `<span class="bg-gray-100 px-2 py-1 rounded text-xs font-bold mr-1">${i.name} (${i.qty})</span>`).join(' ');
-                    }
+                    // Format item barang
+                    const itemsSummary = (trx.items || []).map(i => 
+                        `<span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-bold mr-1 border">${i.name} (${i.qty})</span>`
+                    ).join(' ');
 
                     const row = `
-                        <tr class="hover:bg-gray-50 transition">
-                            <td class="px-6 py-4 whitespace-nowrap text-gray-600">
-                                <i class="far fa-calendar-alt mr-2 text-gray-400"></i>${trx.date || '-'}
+                        <tr class="hover:bg-gray-50 transition border-b group">
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-600 align-top">
+                                <div class="font-bold text-sm">${trx.date}</div>
                             </td>
-                            <td class="px-6 py-4">
-                                <div class="font-bold text-gray-800">${trx.groupName || '-'}</div>
+                            <td class="px-6 py-4 align-top">
+                                <div class="font-bold text-gray-800 text-sm">${trx.groupName || '-'}</div>
                                 <div class="text-xs text-gray-500"><i class="fas fa-user mr-1"></i> ${trx.picName || '-'}</div>
                             </td>
-                            <td class="px-6 py-4">
-                                <div class="flex flex-wrap gap-1">${itemsSummary}</div>
+                            <td class="px-6 py-4 align-top">
+                                <div class="flex flex-wrap gap-1 mb-1">${itemsSummary}</div>
                             </td>
-                            <td class="px-6 py-4 text-right font-bold text-green-700">
-                                Rp ${(trx.totalPrice || 0).toLocaleString('id-ID')}
+                            <td class="px-6 py-4 text-right align-top">
+                                <div class="font-bold text-green-700 text-sm">Rp ${(trx.totalPrice || 0).toLocaleString('id-ID')}</div>
+                            </td>
+                            <td class="px-6 py-4 text-right align-top">
+                                <button onclick="window.deleteTrx('${trx.id}')" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded transition" title="Hapus Data">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             </td>
                         </tr>
                     `;
                     tbody.innerHTML += row;
                 });
-            }, (error) => {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-red-500">Gagal memuat data. Periksa koneksi.</td></tr>';
             });
         }
         
@@ -670,6 +678,45 @@
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = 'Proses Transaksi';
+                }
+            });
+        };
+
+        // --- DELETE FUNCTION ---
+        window.deleteTrx = (id) => {
+            window.showConfirm("Hapus riwayat ini? Stok barang akan dikembalikan otomatis.", async (yes) => {
+                if(!yes) return;
+                
+                try {
+                    // 1. Ambil data transaksi dulu (untuk tahu barang apa yang harus dibalikin)
+                    const ref = doc(db, 'vikrama_transactions', id);
+                    const snap = await getDoc(ref);
+                    
+                    if(snap.exists()) {
+                        const data = snap.data();
+
+                        // 2. Loop item untuk kembalikan stok
+                        if(data.items && Array.isArray(data.items)) {
+                            for(const item of data.items) {
+                                // Cari produk di inventory berdasarkan nama
+                                const product = allProducts.find(p => p.name === item.name);
+                                if(product) {
+                                    // Update stok: Stok Lama + Jumlah yang dibatalkan
+                                    await updateDoc(doc(db, 'vikrama_inventory', product.id), {
+                                        stock: (product.stock || 0) + item.qty
+                                    });
+                                }
+                            }
+                        }
+                    }
+
+                    // 3. Hapus Dokumen Transaksi Selamanya
+                    await deleteDoc(ref);
+                    
+                    showToast("Data dihapus & Stok dikembalikan", "success");
+                } catch(e) {
+                    console.error("Error delete:", e);
+                    showToast("Gagal menghapus data", "error");
                 }
             });
         };
