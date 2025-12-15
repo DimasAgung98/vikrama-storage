@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vikrama Kulapati Gun Storage</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .loading-spinner { border-top-color: #3b82f6; -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .pos-item-hover:hover { background-color: #f0f9ff; border-color: #3b82f6; cursor: pointer; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 100; }
+        .toast { padding: 12px 24px; border-radius: 8px; color: white; margin-top: 10px; animation: slideIn 0.3s ease-out; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .toast-error { background-color: #ef4444; }
+        .toast-success { background-color: #22c55e; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+</head>
+<body class="text-gray-800 h-screen flex flex-col overflow-hidden">
+
+    <div id="toast-container"></div>
+
+    <nav class="bg-slate-900 text-white shadow-lg z-10 border-b border-slate-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <img src="https://placehold.co/40x40/white/black?text=VK" alt="Logo" class="h-10 mr-3 rounded-full bg-white p-0.5 shadow-sm">
+                    <div class="flex flex-col">
+                        <span class="font-bold text-lg leading-tight tracking-wide uppercase">Vikrama Kulapati</span>
+                        <span class="text-xs text-gray-400 tracking-wider">Gun Storage System</span>
+                    </div>
+                </div>
+                <div class="flex space-x-3 items-center">
+                    <button onclick="window.openPOS()" class="bg-yellow-500 hover:bg-yellow-600 text-slate-900 px-4 py-2 rounded font-bold transition flex items-center shadow-lg transform hover:scale-105">
+                        <i class="fas fa-cash-register mr-2"></i> Kasir
+                    </button>
+                    <button onclick="document.getElementById('importModal').classList.remove('hidden')" class="bg-green-700 hover:bg-green-800 px-3 py-2 rounded text-sm transition font-medium flex items-center">
+                        <i class="fas fa-file-excel mr-1"></i> Import
+                    </button>
+                    <div id="connectionStatus" class="text-xs bg-slate-800 px-2 py-1 rounded flex items-center border border-slate-600 h-8">
+                        <div class="w-2 h-2 bg-yellow-400 rounded-full mr-1 animate-pulse"></div> ...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex flex-1 overflow-hidden">
+        <aside class="w-64 bg-white shadow-md overflow-y-auto hidden md:block border-r border-gray-200">
+            <div class="p-5 border-b bg-gray-50">
+                <h2 class="font-bold text-gray-700 uppercase text-xs tracking-wider flex items-center"><i class="fas fa-filter mr-2"></i> Filter Kategori</h2>
+            </div>
+            <nav class="mt-2 px-3 pb-4" id="categoryList"></nav>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto p-4 md:p-8 relative bg-gray-50">
+            <div class="md:hidden mb-4"><select id="mobileCategorySelect" class="w-full p-3 border rounded-lg bg-white shadow-sm font-medium"></select></div>
+
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <div>
+                    <h1 id="pageTitle" class="text-2xl font-extrabold text-gray-800 tracking-tight">Semua Senjata</h1>
+                    <p class="text-sm text-gray-500">Kelola inventaris dan stok senjata</p>
+                </div>
+                <div class="flex gap-3 w-full md:w-auto">
+                    <input type="text" id="searchInput" placeholder="Cari..." class="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg shadow-sm">
+                    <button onclick="window.openModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md transition flex items-center font-medium whitespace-nowrap">
+                        <i class="fas fa-plus mr-2"></i> Tambah
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-600">
+                    <div class="text-gray-500 text-xs font-semibold uppercase">Total Item</div>
+                    <div class="text-2xl font-bold mt-1" id="totalProducts">0</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-yellow-500">
+                    <div class="text-gray-500 text-xs font-semibold uppercase">Total Modal</div>
+                    <div class="text-2xl font-bold text-yellow-700 mt-1" id="totalCostValue">Rp 0</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-600">
+                    <div class="text-gray-500 text-xs font-semibold uppercase">Est. Omzet</div>
+                    <div class="text-2xl font-bold text-green-700 mt-1" id="totalSellValue">Rp 0</div>
+                </div>
+            </div>
+
+            <div id="loadingState" class="flex justify-center items-center h-64"><div class="loading-spinner rounded-full border-4 border-t-4 border-gray-200 h-12 w-12"></div></div>
+            <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 hidden"></div>
+            <div id="emptyState" class="hidden flex flex-col items-center justify-center h-64 text-gray-400"><i class="fas fa-crosshairs text-6xl mb-4 opacity-30"></i><p>Tidak ada data.</p></div>
+        </main>
+    </div>
+
+    <div id="posModal" class="fixed inset-0 bg-gray-100 z-50 hidden flex flex-col">
+        <div class="bg-slate-900 text-white p-4 flex justify-between items-center shadow-md shrink-0">
+            <div class="flex items-center"><i class="fas fa-cash-register text-2xl text-yellow-500 mr-3"></i><h2 class="font-bold text-xl">POS System</h2></div>
+            <button onclick="window.closePOS()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-sm font-bold"><i class="fas fa-times mr-1"></i> Tutup</button>
+        </div>
+        <div class="flex flex-1 overflow-hidden">
+            <div class="flex-1 flex flex-col p-4 border-r border-gray-300 bg-gray-50">
+                <div class="mb-4 flex gap-2">
+                    <input type="text" id="posSearchInput" placeholder="Cari produk..." class="flex-1 px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-lg">
+                    <select id="posCategoryFilter" class="w-1/3 px-3 py-3 border border-gray-300 rounded-lg shadow-sm bg-white font-medium"></select>
+                </div>
+                <div id="posProductGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 overflow-y-auto p-1 pb-20"></div>
+            </div>
+            <div class="w-full md:w-96 bg-white shadow-xl flex flex-col shrink-0 z-10">
+                <div class="p-4 bg-blue-50 border-b border-blue-100"><h3 class="font-bold text-blue-900"><i class="fas fa-shopping-cart mr-2"></i> Keranjang</h3></div>
+                <div class="flex-1 overflow-y-auto p-4 space-y-3" id="cartItems"></div>
+                <div class="p-4 bg-gray-50 border-t border-gray-200 space-y-2">
+                    <div class="flex justify-between items-end border-t border-gray-200 pt-2">
+                        <span class="font-bold text-gray-800 text-lg">Total Tagihan:</span>
+                        <span class="font-bold text-2xl text-blue-600" id="cartTotalSell">Rp 0</span>
+                    </div>
+                    <button onclick="window.processCheckout()" id="btnCheckout" disabled class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg shadow-lg transition mt-2">Proses Transaksi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md">
+            <div class="flex justify-between items-center p-5 border-b">
+                <h3 class="text-lg font-bold" id="modalTitle">Tambah Data</h3>
+                <button onclick="window.closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="productForm" class="p-5 space-y-4">
+                <input type="hidden" id="productId">
+                <div><label class="block text-sm font-medium mb-1">Nama</label><input type="text" id="name" required class="w-full px-3 py-2 border rounded-lg"></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-sm font-medium mb-1">Kategori</label><select id="category" required class="w-full px-3 py-2 border rounded-lg"></select></div>
+                    <div><label class="block text-sm font-medium mb-1">Stok</label><input type="number" id="stock" required min="0" class="w-full px-3 py-2 border rounded-lg"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-sm font-medium mb-1">Modal (Rp)</label><input type="number" id="costPrice" required class="w-full px-3 py-2 border rounded-lg bg-gray-50"></div>
+                    <div><label class="block text-sm font-medium mb-1">Jual (Rp)</label><input type="number" id="sellingPrice" required class="w-full px-3 py-2 border rounded-lg font-bold text-green-700"></div>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg">Simpan</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="importModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg">
+            <div class="p-5 border-b"><h3 class="text-lg font-bold">Import Excel</h3></div>
+            <div class="p-6">
+                <p class="text-sm text-gray-600 mb-4">Header kolom wajib: <code>nama</code>, <code>kategori</code>, <code>modal</code>, <code>jual</code>, <code>stok</code></p>
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center relative hover:bg-gray-50">
+                    <input type="file" id="excelInput" accept=".xlsx, .xls" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                    <i class="fas fa-file-excel text-4xl text-green-500 mb-2"></i>
+                    <p class="text-gray-500 font-medium">Klik untuk upload file Excel</p>
+                </div>
+                <div id="importStatus" class="mt-4 text-sm hidden"></div>
+            </div>
+            <div class="p-5 border-t bg-gray-50 flex justify-end"><button onclick="document.getElementById('importModal').classList.add('hidden')" class="text-gray-600 font-medium px-4">Tutup</button></div>
+        </div>
+    </div>
+
+    <div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-50 z-[60] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4"><i class="fas fa-exclamation-triangle text-yellow-600 text-xl"></i></div>
+            <h3 class="text-lg font-medium mb-2">Konfirmasi</h3>
+            <p class="text-sm text-gray-500 mb-6" id="confirmMessage">Yakin?</p>
+            <div class="flex justify-center gap-3">
+                <button onclick="window.confirmNo()" class="px-4 py-2 bg-gray-200 rounded-lg">Batal</button>
+                <button onclick="window.confirmYes()" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Ya</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+        // =================================================================
+        // AREA INI YANG HARUS ANDA ISI DENGAN KODE DARI FIREBASE
+        // =================================================================
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyD9NymFd2G46ipaQXsOUJEZSXqcgNZDUA8",
+  authDomain: "vikrama-storage.firebaseapp.com",
+  projectId: "vikrama-storage",
+  storageBucket: "vikrama-storage.firebasestorage.app",
+  messagingSenderId: "521669285666",
+  appId: "1:521669285666:web:b1fce2336db5317795777b"
+        };
+
+        // =================================================================
+        // JANGAN UBAH KODE DI BAWAH INI KECUALI PAHAM
+        // =================================================================
+
+        const CATEGORIES = ['Semua', 'Kelas 1', 'Kelas 2', 'Kelas 3', 'Kelas 4', 'Aksesoris'];
+        let db, auth, user;
+        let allProducts = [];
+        let currentCategory = 'Semua';
+        let searchTerm = '', posCart = [], posCategory = 'Semua', posSearch = '';
+
+        // Init Firebase
+        function initFirebase() {
+            if (!firebaseConfig.apiKey) {
+                document.getElementById('connectionStatus').innerHTML = '<span class="text-red-400 font-bold">Config Error</span>';
+                alert("MOHON ISI 'firebaseConfig' DI DALAM CODE HTML TERLEBIH DAHULU!");
+                return;
+            }
+            try {
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                signInAnonymously(auth).catch(e => console.error("Auth Err", e));
+                
+                onAuthStateChanged(auth, (u) => {
+                    if (u) {
+                        user = u;
+                        const s = document.getElementById('connectionStatus');
+                        s.innerHTML = '<div class="w-2 h-2 bg-green-400 rounded-full mr-1"></div> <span class="text-white">Online</span>';
+                        s.classList.replace('bg-slate-800', 'bg-green-800');
+                        s.classList.replace('border-slate-600', 'border-green-600');
+                        subscribeData();
+                    }
+                });
+            } catch (err) { console.error(err); }
+        }
+
+        function subscribeData() {
+            // Menggunakan 1 collection utama agar lebih mudah
+            const ref = collection(db, 'vikrama_inventory');
+            onSnapshot(ref, (snap) => {
+                document.getElementById('loadingState').classList.add('hidden');
+                allProducts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                allProducts.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                renderProducts();
+                if(!document.getElementById('posModal').classList.contains('hidden')) renderPosProducts();
+            });
+        }
+
+        // Logic UI (Disederhanakan untuk Vercel/Production)
+        function renderProducts() {
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = '';
+            const filtered = allProducts.filter(p => {
+                const c = currentCategory === 'Semua' || p.category === currentCategory;
+                const s = p.name ? p.name.toLowerCase().includes(searchTerm) : false;
+                return c && s;
+            });
+
+            // Update Stats
+            document.getElementById('totalProducts').innerText = filtered.length;
+            document.getElementById('totalCostValue').innerText = 'Rp ' + filtered.reduce((a, b) => a + ((b.costPrice||0)*b.stock), 0).toLocaleString('id-ID');
+            document.getElementById('totalSellValue').innerText = 'Rp ' + filtered.reduce((a, b) => a + ((b.sellingPrice||0)*b.stock), 0).toLocaleString('id-ID');
+
+            if (filtered.length === 0) {
+                document.getElementById('emptyState').classList.remove('hidden');
+                grid.classList.add('hidden');
+            } else {
+                document.getElementById('emptyState').classList.add('hidden');
+                grid.classList.remove('hidden');
+            }
+
+            filtered.forEach(p => {
+                let badge = 'bg-gray-100 text-gray-600';
+                if(p.category?.includes('1')) badge='bg-red-100 text-red-600';
+                if(p.category?.includes('2')) badge='bg-orange-100 text-orange-600';
+                if(p.category?.includes('3')) badge='bg-yellow-100 text-yellow-600';
+                if(p.category?.includes('4')) badge='bg-blue-100 text-blue-600';
+
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-xl shadow-sm border border-gray-200 p-5 card-hover relative group flex flex-col justify-between';
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-[10px] uppercase font-bold px-2 py-1 rounded-full ${badge}">${p.category}</span>
+                            <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onclick="window.editProduct('${p.id}')" class="text-blue-500 mr-2"><i class="fas fa-edit"></i></button>
+                                <button onclick="window.deleteProduct('${p.id}')" class="text-red-500"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                        <h3 class="font-bold text-gray-800 mb-2">${p.name}</h3>
+                        <div class="flex justify-between text-xs mb-1"><span>Modal:</span><span>Rp ${(p.costPrice||0).toLocaleString('id-ID')}</span></div>
+                        <div class="flex justify-between font-bold text-green-700 text-sm"><span>Jual:</span><span>Rp ${(p.sellingPrice||0).toLocaleString('id-ID')}</span></div>
+                    </div>
+                    <div class="flex items-center justify-between pt-3 border-t mt-3">
+                        <div class="text-xs text-gray-500 uppercase font-semibold">Stok</div>
+                        <div class="flex items-center">
+                            <button onclick="window.updateStock('${p.id}', -1)" class="w-7 h-7 bg-gray-200 rounded-full font-bold hover:bg-gray-300">-</button>
+                            <span class="mx-2 font-mono font-bold">${p.stock}</span>
+                            <button onclick="window.updateStock('${p.id}', 1)" class="w-7 h-7 bg-blue-100 text-blue-700 rounded-full font-bold hover:bg-blue-200">+</button>
+                        </div>
+                    </div>`;
+                grid.appendChild(card);
+            });
+        }
+
+        // --- CRUD & POS Functions attached to window ---
+        window.updateStock = async (id, val) => {
+            const p = allProducts.find(x => x.id === id);
+            if(p) {
+                const n = (p.stock || 0) + val;
+                if(n >= 0) await updateDoc(doc(db, 'vikrama_inventory', id), { stock: n });
+            }
+        };
+
+        // Form Submit
+        document.getElementById('productForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('productId').value;
+            const data = {
+                name: document.getElementById('name').value,
+                category: document.getElementById('category').value,
+                stock: parseInt(document.getElementById('stock').value) || 0,
+                costPrice: parseInt(document.getElementById('costPrice').value) || 0,
+                sellingPrice: parseInt(document.getElementById('sellingPrice').value) || 0
+            };
+            try {
+                if(id) await updateDoc(doc(db, 'vikrama_inventory', id), data);
+                else await addDoc(collection(db, 'vikrama_inventory'), data);
+                window.closeModal();
+                showToast("Berhasil disimpan", "success");
+            } catch(err) { showToast("Gagal simpan", "error"); }
+        });
+
+        // Global functions for HTML access
+        window.openModal = () => {
+            document.getElementById('productForm').reset();
+            document.getElementById('productId').value = '';
+            document.getElementById('modalTitle').innerText = 'Tambah Data';
+            document.getElementById('productModal').classList.remove('hidden');
+        };
+        window.closeModal = () => document.getElementById('productModal').classList.add('hidden');
+        window.editProduct = (id) => {
+            const p = allProducts.find(x => x.id === id);
+            if(!p) return;
+            document.getElementById('productId').value = p.id;
+            document.getElementById('name').value = p.name;
+            document.getElementById('category').value = p.category;
+            document.getElementById('stock').value = p.stock;
+            document.getElementById('costPrice').value = p.costPrice;
+            document.getElementById('sellingPrice').value = p.sellingPrice;
+            document.getElementById('modalTitle').innerText = 'Edit Data';
+            document.getElementById('productModal').classList.remove('hidden');
+        };
+        window.deleteProduct = (id) => {
+            window.showConfirm('Hapus data ini?', async (yes) => {
+                if(yes) await deleteDoc(doc(db, 'vikrama_inventory', id));
+            });
+        };
+
+        // UI & Filter
+        window.filterCategory = (c) => {
+            currentCategory = c;
+            renderProducts();
+            document.getElementById('pageTitle').innerText = c;
+        };
+        document.getElementById('searchInput').addEventListener('input', (e) => { searchTerm = e.target.value.toLowerCase(); renderProducts(); });
+
+        // Setup Categories
+        const nav = document.getElementById('categoryList');
+        const catSel = document.getElementById('category');
+        const mobSel = document.getElementById('mobileCategorySelect');
+        const posSel = document.getElementById('posCategoryFilter');
+        
+        CATEGORIES.forEach(c => {
+            nav.innerHTML += `<button onclick="window.filterCategory('${c}')" class="w-full text-left px-4 py-2 rounded-lg mb-1 hover:bg-gray-100 text-gray-600">${c}</button>`;
+            mobSel.innerHTML += `<option value="${c}">${c}</option>`;
+            posSel.innerHTML += `<option value="${c}">${c}</option>`;
+            if(c !== 'Semua') catSel.innerHTML += `<option value="${c}">${c}</option>`;
+        });
+        mobSel.addEventListener('change', (e) => window.filterCategory(e.target.value));
+
+        // Toast Helper
+        function showToast(msg, type) {
+            const el = document.createElement('div');
+            el.className = `toast ${type === 'success' ? 'toast-success' : 'toast-error'}`;
+            el.innerText = msg;
+            document.getElementById('toast-container').appendChild(el);
+            setTimeout(() => el.remove(), 3000);
+        }
+
+        // Confirm Helper
+        let confirmCb;
+        window.showConfirm = (msg, cb) => {
+            document.getElementById('confirmMessage').innerText = msg;
+            document.getElementById('confirmationModal').classList.remove('hidden');
+            confirmCb = cb;
+        };
+        window.confirmYes = () => { document.getElementById('confirmationModal').classList.add('hidden'); if(confirmCb) confirmCb(true); };
+        window.confirmNo = () => { document.getElementById('confirmationModal').classList.add('hidden'); if(confirmCb) confirmCb(false); };
+
+        // POS & Cart Logic
+        window.openPOS = () => { document.getElementById('posModal').classList.remove('hidden'); posCart=[]; renderCart(); renderPosProducts(); };
+        window.closePOS = () => { if(posCart.length > 0) window.showConfirm("Batalkan?", (y)=>{if(y) document.getElementById('posModal').classList.add('hidden')}); else document.getElementById('posModal').classList.add('hidden'); };
+        
+        window.addToCart = (id) => {
+            const p = allProducts.find(x => x.id === id);
+            if(!p || p.stock <= 0) return showToast("Stok Habis!", "error");
+            const exist = posCart.find(x => x.id === id);
+            if(exist) { if(exist.qty < p.stock) exist.qty++; else showToast("Stok max!", "error"); }
+            else posCart.push({ id: p.id, name: p.name, price: p.sellingPrice, cost: p.costPrice, qty: 1, max: p.stock });
+            renderCart();
+        };
+        window.removeFromCart = (id) => { posCart = posCart.filter(x => x.id !== id); renderCart(); };
+        window.updateCartQty = (id, v) => {
+            const item = posCart.find(x => x.id === id);
+            if(!item) return;
+            const n = item.qty + v;
+            if(n > item.max) return showToast("Max Stok", "error");
+            if(n <= 0) window.removeFromCart(id);
+            else { item.qty = n; renderCart(); }
+        };
+
+        function renderPosProducts() {
+            const grid = document.getElementById('posProductGrid'); grid.innerHTML = '';
+            allProducts.filter(p => (posCategory==='Semua'||p.category===posCategory) && (p.name||'').toLowerCase().includes(posSearch) && p.stock > 0)
+            .forEach(p => {
+                grid.innerHTML += `<div onclick="window.addToCart('${p.id}')" class="bg-white border rounded p-3 cursor-pointer hover:border-blue-500">
+                    <div class="text-xs bg-gray-100 inline px-1 rounded">${p.category}</div>
+                    <div class="font-bold text-sm my-1">${p.name}</div>
+                    <div class="flex justify-between text-xs text-gray-500"><span>Stok: ${p.stock}</span><span class="font-bold text-green-700">Rp ${(p.sellingPrice||0).toLocaleString('id-ID')}</span></div>
+                </div>`;
+            });
+        }
+        function renderCart() {
+            const c = document.getElementById('cartItems'); c.innerHTML = '';
+            let t = 0;
+            posCart.forEach(i => {
+                t += i.price * i.qty;
+                c.innerHTML += `<div class="flex justify-between items-center bg-gray-50 p-2 rounded mb-2 border">
+                    <div class="flex-1"><div class="font-bold text-sm">${i.name}</div><div class="text-xs text-gray-500">@ ${i.price.toLocaleString()}</div></div>
+                    <div class="flex items-center mx-2 gap-2"><button onclick="window.updateCartQty('${i.id}',-1)" class="bg-gray-200 w-6 rounded">-</button><span class="font-bold text-sm">${i.qty}</span><button onclick="window.updateCartQty('${i.id}',1)" class="bg-blue-100 text-blue-600 w-6 rounded">+</button></div>
+                    <div class="text-right text-sm font-bold">Rp ${(i.price*i.qty).toLocaleString()} <div onclick="window.removeFromCart('${i.id}')" class="text-red-400 text-xs cursor-pointer font-normal">Hapus</div></div>
+                </div>`;
+            });
+            document.getElementById('cartTotalSell').innerText = 'Rp ' + t.toLocaleString('id-ID');
+            document.getElementById('btnCheckout').disabled = posCart.length === 0;
+        }
+        
+        window.processCheckout = () => {
+            window.showConfirm("Proses transaksi?", async (y) => {
+                if(!y) return;
+                const btn = document.getElementById('btnCheckout'); btn.disabled = true; btn.innerText = "Memproses...";
+                try {
+                    for(const i of posCart) {
+                        const p = allProducts.find(x => x.id === i.id);
+                        if(p) await updateDoc(doc(db, 'vikrama_inventory', i.id), { stock: Math.max(0, p.stock - i.qty) });
+                    }
+                    posCart = []; renderCart(); showToast("Transaksi Berhasil", "success");
+                } catch(e) { console.error(e); showToast("Gagal", "error"); }
+                finally { btn.disabled = false; btn.innerText = "Proses Transaksi"; }
+            });
+        };
+
+        // Search POS Listeners
+        document.getElementById('posSearchInput').addEventListener('input', (e)=>{ posSearch=e.target.value.toLowerCase(); renderPosProducts(); });
+        document.getElementById('posCategoryFilter').addEventListener('change', (e)=>{ posCategory=e.target.value; renderPosProducts(); });
+
+        // Jalankan
+        initFirebase();
+
+    </script>
+</body>
+</html>
