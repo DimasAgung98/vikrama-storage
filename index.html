@@ -4,9 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Vikrama Kulapati - Gun Storage</title>
+    <link rel="icon" href="https://i.ibb.co.com/W7ZhG2G/convertico-Hitam-Oranye-Lingkaran-Paguyuban-Kelas-Logo-32x32.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Library Screenshot -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -16,6 +19,14 @@
         body { -webkit-tap-highlight-color: transparent; font-family: 'Segoe UI', sans-serif; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .toast { animation: slideIn 0.3s ease-out; }
+        .alert-card { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        /* Receipt Pattern */
+        .receipt-pattern {
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 10px 10px;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 h-screen flex flex-col overflow-hidden">
@@ -24,7 +35,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center">
-                    <img src="https://img.icons8.com/ios-filled/50/000000/octopus.png" alt="Logo" class="h-8 mr-3 rounded-full bg-white p-1 shadow-sm">
+                    <img src="https://i.ibb.co.com/v4GmRjLj/Hitam-Oranye-Lingkaran-Paguyuban-Kelas-Logo.png" alt="Logo" class="h-8 mr-3 rounded-full bg-white p-1 shadow-sm">
                     <div class="flex flex-col">
                         <span class="font-bold text-lg leading-tight tracking-wide uppercase">Vikrama Kulapati</span>
                         <span class="text-xs text-gray-400 tracking-wider">Gun Storage System</span>
@@ -51,35 +62,42 @@
             </div>
             <nav class="mt-2 px-3 pb-4 space-y-1">
                 <button onclick="window.switchPage('inventory')" id="menu-inventory" class="w-full text-left px-4 py-3 rounded-lg transition flex items-center bg-blue-100 text-blue-700 font-bold border-l-4 border-blue-600">
-                    <i class="fas fa-boxes mr-3"></i> Stok Senjata
+                    <i class="fas fa-boxes mr-3 w-5"></i> Stok Senjata
+                </button>
+                <button onclick="window.switchPage('groups')" id="menu-groups" class="w-full text-left px-4 py-3 rounded-lg transition flex items-center text-gray-600 hover:bg-gray-100">
+                    <i class="fas fa-users mr-3 w-5"></i> Kelompok & Limit
+                </button>
+                <button onclick="window.switchPage('report')" id="menu-report" class="w-full text-left px-4 py-3 rounded-lg transition flex items-center text-gray-600 hover:bg-gray-100">
+                    <i class="fas fa-clipboard-list mr-3 w-5"></i> Laporan & Stok
                 </button>
                 <button onclick="window.switchPage('history')" id="menu-history" class="w-full text-left px-4 py-3 rounded-lg transition flex items-center text-gray-600 hover:bg-gray-100">
-                    <i class="fas fa-history mr-3"></i> Riwayat Transaksi
+                    <i class="fas fa-history mr-3 w-5"></i> Riwayat
                 </button>
             </nav>
-            <div class="p-5 border-b bg-gray-50 mt-4">
+            <div id="filterSection" class="p-5 border-b bg-gray-50 mt-4">
                 <h2 class="font-bold text-gray-700 uppercase text-xs tracking-wider flex items-center"><i class="fas fa-filter mr-2"></i> Filter Kategori</h2>
             </div>
             <nav class="mt-2 px-3 pb-4" id="categoryList"></nav>
         </aside>
 
         <main class="flex-1 overflow-y-auto p-4 md:p-8 relative bg-gray-50 flex flex-col" id="mainScroll">
-            <div class="md:hidden mb-4"><select id="mobileCategorySelect" class="w-full p-3 border rounded-lg bg-white shadow-sm font-medium"></select></div>
+            <div id="mobileFilterContainer" class="md:hidden mb-4"><select id="mobileCategorySelect" class="w-full p-3 border rounded-lg bg-white shadow-sm font-medium"></select></div>
 
             <div class="flex-1">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                     <div>
                         <h1 id="pageTitle" class="text-2xl font-extrabold text-gray-800 tracking-tight">Semua Senjata</h1>
-                        <p class="text-sm text-gray-500">Kelola inventaris dan stok senjata</p>
+                        <p class="text-sm text-gray-500" id="pageDesc">Kelola inventaris dan stok senjata</p>
                     </div>
-                    <div class="flex gap-3 w-full md:w-auto">
+                    
+                    <div id="actionButtons" class="flex gap-3 w-full md:w-auto">
                         <input type="text" id="searchInput" placeholder="Cari..." class="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <button onclick="window.openModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md transition flex items-center font-medium whitespace-nowrap">
                             <i class="fas fa-plus mr-2"></i> Tambah
                         </button>
                         <div class="relative">
                             <input type="file" id="excelInput" class="hidden" accept=".xlsx, .xls">
-                            <button onclick="document.getElementById('excelInput').click()" class="bg-green-700 hover:bg-green-800 px-3 py-2 rounded-lg text-white shadow-md transition font-medium flex items-center h-full">
+                            <button onclick="document.getElementById('excelInput').click()" class="bg-green-700 hover:bg-green-800 px-3 py-2 rounded-lg text-white shadow-md transition font-medium flex items-center h-full" title="Import Excel">
                                 <i class="fas fa-file-excel"></i>
                             </button>
                         </div>
@@ -104,25 +122,75 @@
                 <div id="loadingState" class="flex justify-center items-center h-64"><div class="animate-spin rounded-full border-4 border-t-4 border-slate-800 h-10 w-10"></div></div>
                 <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 hidden pb-4"></div>
                 
-                <div id="historyView" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-4">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm whitespace-nowrap">
-                            <thead class="bg-slate-900 text-white uppercase font-bold text-xs">
-                                <tr>
-                                    <th class="px-6 py-4">Tanggal</th>
-                                    <th class="px-6 py-4">Kelompok & PIC</th>
-                                    <th class="px-6 py-4">Detail Barang</th>
-                                    <th class="px-6 py-4 text-right">Total Transaksi</th>
-                                    <th class="px-6 py-4 text-right">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="transactionTableBody" class="divide-y divide-gray-200"></tbody>
-                        </table>
-                    </div>
-                    <div id="emptyHistory" class="hidden p-10 text-center text-gray-400">
-                        <i class="fas fa-receipt text-4xl mb-3"></i><p>Belum ada riwayat transaksi.</p>
+                <!-- HISTORY VIEW -->
+                <div id="historyView" class="hidden flex flex-col gap-4">
+                    <div class="flex justify-end hidden"></div>
+                    <div id="historyTableContainer" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden p-2">
+                        <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-slate-50">
+                            <div>
+                                <h3 class="font-bold text-lg text-slate-800">Laporan Riwayat Transaksi</h3>
+                                <p class="text-xs text-gray-500">Vikrama Kulapati Gun Storage</p>
+                            </div>
+                            <div class="text-right text-xs text-gray-400">
+                                Generated: <span id="historyDateStamp"></span>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm whitespace-nowrap">
+                                <thead class="bg-slate-900 text-white uppercase font-bold text-xs">
+                                    <tr>
+                                        <th class="px-6 py-4">Tanggal</th>
+                                        <th class="px-6 py-4">Kelompok & PIC</th>
+                                        <th class="px-6 py-4">Detail Barang</th>
+                                        <th class="px-6 py-4 text-right">Total</th>
+                                        <th class="px-6 py-4 text-center">Struk</th>
+                                        <th class="px-6 py-4 text-right">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transactionTableBody" class="divide-y divide-gray-200"></tbody>
+                            </table>
+                        </div>
+                        <div id="emptyHistory" class="hidden p-10 text-center text-gray-400">
+                            <i class="fas fa-receipt text-4xl mb-3"></i><p>Belum ada riwayat transaksi.</p>
+                        </div>
                     </div>
                 </div>
+
+                <div id="groupsView" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                
+                <!-- NEW: REPORT & STOCK VIEW -->
+                <div id="reportView" class="hidden flex flex-col gap-4">
+                    <div class="flex justify-end">
+                        <button onclick="window.screenshotElement('stockReportCard', 'Laporan_Sisa_Stok')" class="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center shadow-lg transition">
+                            <i class="fas fa-camera mr-2"></i> Simpan Gambar (Discord)
+                        </button>
+                    </div>
+                    <div id="stockReportCard" class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+                        <div class="flex justify-between items-center mb-6 border-b border-gray-200 pb-4">
+                            <div class="flex items-center">
+                                <img src="https://img.icons8.com/ios-filled/50/000000/octopus.png" class="h-10 mr-3">
+                                <div>
+                                    <h2 class="text-2xl font-bold text-slate-900 uppercase tracking-wide">Laporan Sisa Stok</h2>
+                                    <p class="text-sm text-gray-500">Vikrama Kulapati Inventory Status</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs text-gray-400 font-bold uppercase">Tanggal Laporan</div>
+                                <div class="text-lg font-bold text-slate-800" id="reportDateDisplay"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="reportGrid">
+                            <!-- Injected Items -->
+                        </div>
+
+                        <div class="mt-8 pt-4 border-t border-gray-200 flex justify-between items-center text-xs text-gray-400">
+                            <span>System Generated Report</span>
+                            <span>Vikrama Kulapati Secure System</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="emptyState" class="hidden flex flex-col items-center justify-center h-64 text-gray-400"><i class="fas fa-crosshairs text-6xl mb-4 opacity-30"></i><p>Tidak ada data.</p></div>
             </div>
 
@@ -130,13 +198,14 @@
                 <div class="flex flex-col md:flex-row justify-between items-center gap-2">
                     <div class="text-xs text-gray-500 font-medium">&copy; <span id="year">2025</span> <span class="font-bold text-slate-800">Vikrama Kulapati</span>.</div>
                     <div class="flex items-center gap-2 text-xs text-gray-400">
-                        <span>Ver 1.0</span><div class="w-1 h-1 bg-gray-300 rounded-full"></div><span>System Ready</span>
+                        <span>Ver 2.0</span><div class="w-1 h-1 bg-gray-300 rounded-full"></div><span>System Ready</span>
                     </div>
                 </div>
             </footer>
         </main>
     </div>
 
+    <!-- POS Modal -->
     <div id="posModal" class="fixed inset-0 z-[45] hidden bg-gray-100 flex flex-col h-screen w-screen overflow-hidden">
         <div class="bg-slate-900 text-white p-4 flex justify-between items-center shadow-md shrink-0 z-20">
             <div class="flex items-center">
@@ -148,11 +217,26 @@
 
         <div class="flex flex-1 overflow-hidden">
             <div class="flex-1 flex flex-col bg-gray-50 border-r border-gray-300 min-w-0">
-                <div class="p-4 bg-white border-b border-gray-200 flex gap-3 shadow-sm shrink-0">
+                <div class="p-4 bg-white border-b border-gray-200 flex flex-col md:flex-row gap-3 shadow-sm shrink-0">
+                    <div class="w-full md:w-1/3">
+                        <select id="posGroupSelect" class="w-full border-2 border-blue-500 rounded-lg px-3 py-2 bg-blue-50 font-bold text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">-- Pilih Kelompok --</option>
+                        </select>
+                    </div>
                     <input type="text" id="posSearchInput" placeholder="Cari produk..." class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
-                    <select id="posCategoryFilter" class="border border-gray-300 rounded-lg px-4 py-2 bg-white font-bold text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"></select>
+                    <select id="posCategoryFilter" class="w-full md:w-auto border border-gray-300 rounded-lg px-4 py-2 bg-white font-medium text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"></select>
                 </div>
-                <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                
+                <div id="posLimitInfo" class="bg-yellow-50 border-b border-yellow-200 px-4 py-2 text-xs flex justify-between items-center text-yellow-800 hidden">
+                    <span><i class="fas fa-info-circle mr-1"></i> Limit Tersedia untuk Kategori <b id="limitCategoryName">...</b>:</span>
+                    <span class="font-bold text-lg" id="limitValueDisplay">∞</span>
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-4 custom-scrollbar relative">
+                    <div id="posOverlay" class="absolute inset-0 bg-white/80 z-10 flex flex-col items-center justify-center text-gray-400">
+                        <i class="fas fa-users text-4xl mb-2"></i>
+                        <p>Silahkan pilih Kelompok Pembeli terlebih dahulu</p>
+                    </div>
                     <div id="posProductGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-20"></div>
                 </div>
             </div>
@@ -160,10 +244,7 @@
             <div class="w-full md:w-[400px] bg-white shadow-xl flex flex-col shrink-0 z-10 border-l border-gray-200 h-full">
                 <div class="p-4 bg-blue-50 border-b border-blue-100 space-y-3 shrink-0">
                     <div><label class="text-[10px] font-bold text-gray-500 uppercase">Tanggal</label><input type="date" id="posDate" class="w-full px-3 py-1.5 border rounded font-medium text-sm"></div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">Kelompok</label><input type="text" id="posGroup" class="w-full px-3 py-1.5 border rounded text-sm" placeholder="Nama Group"></div>
-                        <div><label class="text-[10px] font-bold text-gray-500 uppercase">PIC</label><input type="text" id="posPic" class="w-full px-3 py-1.5 border rounded text-sm" placeholder="Nama PIC"></div>
-                    </div>
+                    <div><label class="text-[10px] font-bold text-gray-500 uppercase">PIC (Penanggung Jawab)</label><input type="text" id="posPic" class="w-full px-3 py-1.5 border rounded text-sm" placeholder="Nama Anggota"></div>
                 </div>
 
                 <div class="px-4 py-2 bg-gray-100 border-b border-gray-200 flex justify-between items-center shrink-0">
@@ -175,11 +256,10 @@
 
                 <div class="px-4 py-3 bg-yellow-50 border-t border-b border-yellow-100 shrink-0 space-y-2">
                     <div class="flex justify-between items-center">
-                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Biaya Lain / Diskon</span>
-                        <span class="text-[9px] text-gray-400 italic">(- untuk diskon)</span>
+                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Adjustment (Otomatis/Manual)</span>
                     </div>
                     <div class="flex gap-2">
-                        <input type="text" id="customNote" placeholder="Ket (Cth: Ongkir/Diskon)" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-blue-500">
+                        <input type="text" id="customNote" placeholder="Ket (Cth: Ongkir)" class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-blue-500">
                         <input type="number" id="customAmount" placeholder="0" class="w-28 border border-gray-300 rounded px-2 py-1.5 text-xs text-right font-bold outline-none focus:border-blue-500 text-gray-700" oninput="window.renderCart()">
                     </div>
                 </div>
@@ -199,6 +279,7 @@
         </div>
     </div>
 
+    <!-- Modals -->
     <div id="productModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black bg-opacity-50 p-4 backdrop-blur-sm">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md relative">
             <div class="flex justify-between items-center p-5 border-b"><h3 class="text-lg font-bold" id="modalTitle">Tambah Data</h3><button onclick="window.closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button></div>
@@ -214,6 +295,36 @@
                     <div><label class="block text-sm font-medium mb-1">Jual (Rp)</label><input type="number" id="sellingPrice" required class="w-full px-3 py-2 border rounded-lg font-bold text-green-700"></div>
                 </div>
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg">Simpan</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="groupModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black bg-opacity-50 p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg relative max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center p-5 border-b sticky top-0 bg-white z-10"><h3 class="text-lg font-bold" id="groupModalTitle">Setup Kelompok</h3><button onclick="document.getElementById('groupModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button></div>
+            <form id="groupForm" class="p-5 space-y-4">
+                <input type="hidden" id="groupId">
+                <div><label class="block text-sm font-medium mb-1">Nama Kelompok</label><input type="text" id="groupName" required class="w-full px-3 py-2 border rounded-lg" placeholder="Cth: Kelompok Alpha"></div>
+                <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                    <div class="text-xs font-bold text-blue-800 uppercase mb-3 border-b border-blue-200 pb-1">Harga & Periode Limit</div>
+                    <div class="grid grid-cols-2 gap-4">
+                         <div class="col-span-2">
+                            <label class="block text-xs font-medium mb-1 text-gray-700">Penyesuaian Harga per Produk (%)</label>
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="groupPriceAdj" value="0" class="w-24 px-3 py-2 border rounded-lg text-center font-bold" placeholder="0">
+                                <span class="text-[10px] text-gray-500">Contoh: 10 = Harga Naik 10%<br>-5 = Diskon 5%</span>
+                            </div>
+                        </div>
+                        <div><label class="block text-xs font-medium mb-1">Tanggal Mulai</label><input type="date" id="groupPeriodStart" required class="w-full px-3 py-2 border rounded-lg text-sm"></div>
+                        <div><label class="block text-xs font-medium mb-1">Tanggal Selesai</label><input type="date" id="groupPeriodEnd" required class="w-full px-3 py-2 border rounded-lg text-sm"></div>
+                    </div>
+                     <div class="text-[10px] text-gray-500 mt-2 italic">* Limit produk hanya dihitung untuk transaksi dalam rentang tanggal ini.</div>
+                </div>
+                <div class="border-t border-gray-200 pt-4">
+                    <label class="block text-sm font-bold mb-3 text-gray-700">Limit Produk (Qty)</label>
+                    <div class="grid grid-cols-2 gap-3" id="limitInputsContainer"></div>
+                </div>
+                <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-lg shadow-lg">Simpan Pengaturan</button>
             </form>
         </div>
     </div>
@@ -234,13 +345,103 @@
     </div>
 
     <div id="confirmationModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black bg-opacity-50 p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 text-center">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 text-center alert-card">
             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4"><i class="fas fa-exclamation-triangle text-yellow-600 text-xl"></i></div>
             <h3 class="text-lg font-medium mb-2">Konfirmasi</h3>
             <p class="text-sm text-gray-500 mb-6" id="confirmMessage">Yakin?</p>
             <div class="flex justify-center gap-3">
-                <button onclick="window.confirmNo()" class="px-4 py-2 bg-gray-200 rounded-lg">Batal</button>
-                <button onclick="window.confirmYes()" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Ya</button>
+                <button onclick="window.confirmNo()" class="px-4 py-2 bg-gray-200 rounded-lg font-medium">Batal</button>
+                <button onclick="window.confirmYes()" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium">Ya</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Universal Alert Modal -->
+    <div id="universalAlertModal" class="fixed inset-0 z-[70] hidden flex items-center justify-center bg-black bg-opacity-50 p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 alert-card border-t-4" id="alertModalBorder">
+            <div class="flex items-start">
+                <div class="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full sm:mx-0 sm:h-10 sm:w-10" id="alertModalIconBg">
+                    <i class="fas" id="alertModalIcon"></i>
+                </div>
+                <div class="ml-4 text-left">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900" id="alertModalTitle">Title</h3>
+                    <div class="mt-2">
+                        <p class="text-sm text-gray-500" id="alertModalMessage">Message</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                <button type="button" onclick="document.getElementById('universalAlertModal').classList.add('hidden')" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none sm:ml-3 sm:w-auto sm:text-sm transition" id="alertModalButton">
+                    Mengerti
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receipt Modal (Struk) -->
+    <div id="receiptModal" class="fixed inset-0 z-[80] hidden flex items-center justify-center bg-black bg-opacity-60 p-4 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-sm rounded-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-4 bg-slate-800 text-white flex justify-between items-center shrink-0">
+                <h3 class="font-bold text-sm"><i class="fas fa-receipt mr-2"></i>Struk Transaksi</h3>
+                <button onclick="document.getElementById('receiptModal').classList.add('hidden')" class="text-slate-300 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="overflow-y-auto bg-gray-200 p-4 custom-scrollbar" id="receiptContainer">
+                <!-- Receipt Content -->
+                <div id="receiptContent" class="bg-white p-6 shadow-sm receipt-pattern text-slate-800 text-sm font-mono relative">
+                    <div class="text-center mb-4 border-b border-dashed border-gray-300 pb-4">
+                        <div class="font-bold text-lg uppercase tracking-wider">Vikrama Kulapati</div>
+                        <div class="text-xs text-gray-500">Gun Storage System</div>
+                        <div class="text-xs text-gray-400 mt-1" id="receiptDate"></div>
+                    </div>
+                    <div class="mb-4 text-xs space-y-1">
+                        <div class="flex justify-between"><span>Kelompok:</span><span class="font-bold" id="receiptGroup">-</span></div>
+                        <div class="flex justify-between"><span>PIC:</span><span class="font-bold" id="receiptPic">-</span></div>
+                        <div class="flex justify-between"><span>ID Trx:</span><span class="text-gray-400" id="receiptId">#</span></div>
+                    </div>
+                    <div class="border-b border-dashed border-gray-300 pb-2 mb-2">
+                        <table class="w-full text-xs">
+                            <thead><tr class="text-left text-gray-500"><th>Item</th><th class="text-right">Qty</th><th class="text-right">Total</th></tr></thead>
+                            <tbody id="receiptItems" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                    <div class="space-y-1 text-right text-xs">
+                        <div class="flex justify-between text-gray-500"><span>Subtotal:</span><span id="receiptSubtotal">0</span></div>
+                        <div class="flex justify-between text-gray-500"><span>Adj/Biaya:</span><span id="receiptAdj">0</span></div>
+                        <div class="flex justify-between font-bold text-sm mt-2 border-t border-gray-800 pt-2"><span>TOTAL:</span><span id="receiptTotal">0</span></div>
+                    </div>
+                    <div class="mt-6 text-center text-[10px] text-gray-400 italic">
+                        Terima kasih.<br>Simpan struk ini sebagai bukti.
+                    </div>
+                    <!-- Holes decoration -->
+                    <div class="absolute -left-2 top-1/2 w-4 h-4 bg-gray-200 rounded-full"></div>
+                    <div class="absolute -right-2 top-1/2 w-4 h-4 bg-gray-200 rounded-full"></div>
+                </div>
+            </div>
+            <div class="p-4 bg-white border-t border-gray-200 shrink-0">
+                <button onclick="window.saveReceiptImage()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 rounded-lg shadow-md flex items-center justify-center">
+                    <i class="fas fa-camera mr-2"></i> Simpan Struk (Gambar)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Transaction Summary Modal -->
+    <div id="successTransactionModal" class="fixed inset-0 z-[65] hidden flex items-center justify-center bg-black bg-opacity-50 p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-0 overflow-hidden alert-card">
+            <div class="bg-green-600 p-4 text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-500 mb-2">
+                    <i class="fas fa-check text-white text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white">Transaksi Berhasil!</h3>
+            </div>
+            <div class="p-6">
+                <p class="text-center text-gray-500 text-sm mb-4">Transaksi disimpan. Berikut <b>Sisa Limit</b> saat ini:</p>
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200 space-y-2 text-sm" id="successSummaryContent">
+                    <!-- Injected by JS -->
+                </div>
+            </div>
+            <div class="p-4 bg-gray-50 text-center">
+                <button onclick="document.getElementById('successTransactionModal').classList.add('hidden')" class="w-full bg-green-600 text-white font-bold py-2 rounded-lg hover:bg-green-700 transition">Tutup & Kembali</button>
             </div>
         </div>
     </div>
@@ -252,9 +453,6 @@
         import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, getDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-        // ==========================================
-        // ⚠️ PASTE CONFIG FIREBASE ANDA DISINI
-        // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyD9NymFd2G46ipaQXsOUJEZSXqcgNZDUA8",
             authDomain: "vikrama-storage.firebaseapp.com",
@@ -265,8 +463,12 @@
         };
 
         const CATEGORIES = ['Semua', 'Kelas 1', 'Kelas 2', 'Kelas 3', 'Kelas 4', 'Aksesoris'];
-        let db, auth, user, allProducts = [], posCart = [];
+        const LIMIT_CATEGORIES = CATEGORIES.filter(c => c !== 'Semua');
+        let db, auth, user, allProducts = [], posCart = [], allGroups = [], allTransactions = [];
         let currentCategory = 'Semua', searchTerm = '', posCategory = 'Semua', posSearch = '';
+        let selectedGroupId = null;
+        let activeGroupData = null;
+        let groupUsedLimits = {};
 
         function initApp() {
             if (!firebaseConfig.apiKey) { alert("Config Kosong!"); return; }
@@ -294,7 +496,7 @@
                         <input type="password" id="pinInput" placeholder="PIN" class="w-full text-center text-2xl tracking-widest font-bold border-2 border-gray-300 rounded-lg py-3 px-4 focus:border-blue-500 outline-none">
                         <button type="button" id="togglePin" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 p-2"><i class="fas fa-eye" id="eyeIcon"></i></button>
                     </div>
-                    <button id="btnUnlock" class="w-full bg-slate-900 text-white font-bold py-3 rounded-lg active:scale-95">BUKA</button>
+                    <button id="btnUnlock" class="w-full bg-slate-800 text-white font-bold py-3 rounded-lg active:scale-95 hover:bg-slate-900">BUKA</button>
                     <p id="pinError" class="text-red-500 text-xs mt-3 hidden font-bold">PIN Salah!</p>
                 </div>`;
             document.body.appendChild(lockDiv);
@@ -333,13 +535,212 @@
                 allProducts.sort((a, b) => (a.name||'').localeCompare(b.name||''));
                 renderProducts(); if(!document.getElementById('posModal').classList.contains('hidden')) renderPosProducts();
             });
-            loadHistoryData();
+            onSnapshot(collection(db, 'vikrama_groups'), (snap) => {
+                allGroups = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderGroups();
+                updatePosGroupSelect();
+            });
+            onSnapshot(collection(db, 'vikrama_transactions'), (snap) => {
+                allTransactions = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderHistory();
+                if(selectedGroupId) calculateGroupUsage(selectedGroupId); 
+            });
         }
 
+        // --- NEW HELPERS ---
+        window.showAlert = (title, message, type = 'error') => {
+            const modal = document.getElementById('universalAlertModal');
+            const border = document.getElementById('alertModalBorder');
+            const iconBg = document.getElementById('alertModalIconBg');
+            const icon = document.getElementById('alertModalIcon');
+            const btn = document.getElementById('alertModalButton');
+
+            border.className = 'bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 alert-card border-t-4';
+            iconBg.className = 'flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full sm:mx-0 sm:h-10 sm:w-10';
+            btn.className = 'w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none sm:ml-3 sm:w-auto sm:text-sm transition';
+
+            if (type === 'error') {
+                border.classList.add('border-red-500');
+                iconBg.classList.add('bg-red-100');
+                icon.className = 'fas fa-ban text-red-600';
+                btn.classList.add('bg-red-600', 'hover:bg-red-700');
+            } else if (type === 'warning') {
+                border.classList.add('border-yellow-500');
+                iconBg.classList.add('bg-yellow-100');
+                icon.className = 'fas fa-exclamation-triangle text-yellow-600';
+                btn.classList.add('bg-yellow-600', 'hover:bg-yellow-700');
+            } else {
+                border.classList.add('border-blue-500');
+                iconBg.classList.add('bg-blue-100');
+                icon.className = 'fas fa-info-circle text-blue-600';
+                btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            }
+
+            document.getElementById('alertModalTitle').innerText = title;
+            document.getElementById('alertModalMessage').innerHTML = message;
+            modal.classList.remove('hidden');
+        };
+
+        window.showSuccessSummary = (purchasedItems, preTransactionUsage) => {
+            const container = document.getElementById('successSummaryContent');
+            container.innerHTML = '';
+            
+            const cats = {};
+            purchasedItems.forEach(i => {
+                if(!cats[i.category]) cats[i.category] = 0;
+                cats[i.category] += i.qty;
+            });
+
+            // Re-fetch fresh group data to ensure we have valid limits
+            let limits = {};
+            if(activeGroupData) {
+                const freshGroup = allGroups.find(g => g.id === activeGroupData.id);
+                if(freshGroup) limits = freshGroup.limits || {};
+            }
+
+            if(Object.keys(limits).length === 0) {
+                container.innerHTML = '<div class="text-center italic">Tidak ada limit aktif untuk kelompok ini.</div>';
+            } else {
+                for (const [cat, qty] of Object.entries(cats)) {
+                    // Jika limit tidak di-set (undefined) atau 0, anggap tidak ada limit (unlimited)
+                    // Tapi di kode sebelumnya: undefined -> 0.
+                    // Mari kita cek input form. Jika kosong -> undefined.
+                    // Jika undefined, kita anggap Unlimited.
+                    
+                    const max = limits[cat]; 
+                    
+                    let limitText = "∞";
+                    if (max !== undefined && max !== null && max !== "") {
+                        // Limit is set
+                        const usedBefore = preTransactionUsage[cat] || 0;
+                        const remaining = Math.max(0, max - (usedBefore + qty));
+                        limitText = remaining.toString();
+                    }
+
+                    container.innerHTML += `
+                        <div class="flex justify-between items-center border-b border-gray-200 last:border-0 pb-1 last:pb-0">
+                            <span class="font-bold text-gray-700">${cat}</span>
+                            <span class="text-blue-600 font-mono">Sisa: ${limitText}</span>
+                        </div>
+                    `;
+                }
+                if(Object.keys(cats).length === 0) container.innerHTML = '<div class="text-center italic">Item tanpa kategori limit.</div>';
+            }
+            document.getElementById('successTransactionModal').classList.remove('hidden');
+        };
+
+        window.screenshotElement = (elementId, filename) => {
+            const el = document.getElementById(elementId);
+            if(!el) return;
+            showToast("Mengambil gambar...", "success");
+            html2canvas(el, { scale: 2 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `${filename}_${new Date().toISOString().slice(0,10)}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+                showToast("Gambar berhasil disimpan!", "success");
+            }).catch(err => {
+                console.error(err);
+                window.showAlert("Gagal", "Tidak dapat mengambil gambar.", "error");
+            });
+        };
+
+        // --- RECEIPT LOGIC ---
+        window.openReceipt = (trxId) => {
+            const trx = allTransactions.find(t => t.id === trxId);
+            if (!trx) return;
+
+            document.getElementById('receiptDate').innerText = new Date(trx.date).toLocaleDateString('id-ID', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
+            document.getElementById('receiptId').innerText = '#' + trx.id.slice(0, 6).toUpperCase();
+            document.getElementById('receiptGroup').innerText = trx.groupName || '-';
+            document.getElementById('receiptPic').innerText = trx.picName || '-';
+
+            const tbody = document.getElementById('receiptItems');
+            tbody.innerHTML = '';
+            (trx.items || []).forEach(item => {
+                tbody.innerHTML += `
+                    <tr class="py-1">
+                        <td class="align-top py-1 font-bold">${item.name}</td>
+                        <td class="text-right align-top py-1">x${item.qty}</td>
+                        <td class="text-right align-top py-1 font-mono">${(item.price * item.qty).toLocaleString('id-ID')}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('receiptSubtotal').innerText = 'Rp ' + (trx.subtotalItem || 0).toLocaleString('id-ID');
+            
+            const adjVal = trx.customAmount || 0;
+            const adjText = adjVal !== 0 ? (adjVal > 0 ? `+${adjVal.toLocaleString()}` : adjVal.toLocaleString()) : '0';
+            const adjNote = trx.customNote ? `(${trx.customNote})` : '';
+            
+            document.getElementById('receiptAdj').innerHTML = `${adjText} <span class="text-[10px]">${adjNote}</span>`;
+            document.getElementById('receiptTotal').innerText = 'Rp ' + (trx.totalPrice || 0).toLocaleString('id-ID');
+
+            document.getElementById('receiptModal').classList.remove('hidden');
+        };
+
+        window.saveReceiptImage = () => {
+            window.screenshotElement('receiptContent', 'Struk_Transaksi');
+        };
+
+        // --- VIEWS ---
+        window.switchPage = (page) => {
+            const navs = ['inventory', 'groups', 'report', 'history'];
+            navs.forEach(n => {
+                const btn = document.getElementById(`menu-${n}`);
+                if(n === page) {
+                    btn.className = n==='inventory'?"w-full text-left px-4 py-3 rounded-lg transition flex items-center bg-blue-100 text-blue-700 font-bold border-l-4 border-blue-600" :
+                                   n==='groups'?"w-full text-left px-4 py-3 rounded-lg transition flex items-center bg-indigo-100 text-indigo-700 font-bold border-l-4 border-indigo-600" :
+                                   n==='report'?"w-full text-left px-4 py-3 rounded-lg transition flex items-center bg-teal-100 text-teal-700 font-bold border-l-4 border-teal-600" :
+                                   "w-full text-left px-4 py-3 rounded-lg transition flex items-center bg-purple-100 text-purple-700 font-bold border-l-4 border-purple-600";
+                    document.getElementById('pageTitle').innerText = n==='inventory'?"Stok Senjata":n==='groups'?"Kelompok & Limit":n==='report'?"Laporan Stok":"Riwayat Transaksi";
+                    document.getElementById('pageDesc').innerText = n==='inventory'?"Kelola inventaris dan stok":n==='groups'?"Atur limit dan harga per kelompok":n==='report'?"Ringkasan stok barang":"Data transaksi penjualan";
+                } else {
+                    btn.className = "w-full text-left px-4 py-3 rounded-lg transition flex items-center text-gray-600 hover:bg-gray-100";
+                }
+            });
+
+            document.getElementById('productGrid').classList.add('hidden');
+            document.getElementById('historyView').classList.add('hidden');
+            document.getElementById('groupsView').classList.add('hidden');
+            document.getElementById('reportView').classList.add('hidden');
+            
+            document.getElementById('statsContainer').classList.add('hidden');
+            document.getElementById('filterSection').classList.add('hidden');
+            document.getElementById('categoryList').classList.add('hidden');
+            document.getElementById('mobileFilterContainer').classList.add('hidden');
+            document.getElementById('actionButtons').classList.add('hidden');
+
+            if(page === 'inventory') {
+                document.getElementById('productGrid').classList.remove('hidden');
+                document.getElementById('statsContainer').classList.remove('hidden');
+                document.getElementById('filterSection').classList.remove('hidden');
+                document.getElementById('categoryList').classList.remove('hidden');
+                document.getElementById('mobileFilterContainer').classList.remove('hidden');
+                document.getElementById('actionButtons').classList.remove('hidden');
+                renderProducts();
+            } else if (page === 'groups') {
+                document.getElementById('groupsView').classList.remove('hidden');
+                document.getElementById('actionButtons').classList.remove('hidden');
+                document.querySelector('#actionButtons button').setAttribute('onclick', 'window.openGroupModal()');
+                document.querySelector('#actionButtons input[type="text"]').classList.add('hidden');
+                document.querySelector('#actionButtons .relative').classList.add('hidden');
+                renderGroups();
+            } else if (page === 'report') {
+                document.getElementById('reportView').classList.remove('hidden');
+                renderReport();
+            } else {
+                document.getElementById('historyView').classList.remove('hidden');
+                document.querySelector('#actionButtons').classList.add('hidden');
+                renderHistory();
+            }
+        };
+
+        // --- INVENTORY ---
         function renderProducts() {
-            const isHis = !document.getElementById('historyView').classList.contains('hidden');
+            if(document.getElementById('productGrid').classList.contains('hidden')) return;
             const grid = document.getElementById('productGrid');
-            if(!grid) return; grid.innerHTML = '';
+            grid.innerHTML = '';
             
             const filtered = allProducts.filter(p => {
                 const c = currentCategory === 'Semua' || p.category === currentCategory;
@@ -347,116 +748,227 @@
                 return c && s;
             });
 
-            if(document.getElementById('totalProducts')) document.getElementById('totalProducts').innerText = filtered.length;
+            document.getElementById('totalProducts').innerText = filtered.length;
             const tm = filtered.reduce((a, b) => a + ((b.costPrice||0)*b.stock), 0);
-            if(document.getElementById('totalCostValue')) document.getElementById('totalCostValue').innerText = 'Rp ' + tm.toLocaleString('id-ID');
+            document.getElementById('totalCostValue').innerText = 'Rp ' + tm.toLocaleString('id-ID');
             const to = filtered.reduce((a, b) => a + ((b.sellingPrice||0)*b.stock), 0);
-            if(document.getElementById('totalSellValue')) document.getElementById('totalSellValue').innerText = 'Rp ' + to.toLocaleString('id-ID');
+            document.getElementById('totalSellValue').innerText = 'Rp ' + to.toLocaleString('id-ID');
 
             if (filtered.length === 0) {
-                if(document.getElementById('emptyState')) document.getElementById('emptyState').classList.remove('hidden');
+                document.getElementById('emptyState').classList.remove('hidden');
                 grid.classList.add('hidden');
             } else {
-                if(document.getElementById('emptyState')) document.getElementById('emptyState').classList.add('hidden');
-                if (isHis) grid.classList.add('hidden'); else grid.classList.remove('hidden');
+                document.getElementById('emptyState').classList.add('hidden');
+                grid.classList.remove('hidden');
             }
 
-            if (!isHis) {
-                filtered.forEach(p => {
-                    let c = 'gray'; 
-                    if(p.category?.includes('1'))c='red'; else if(p.category?.includes('2'))c='orange';
-                    else if(p.category?.includes('3'))c='yellow'; else if(p.category?.includes('4'))c='blue';
-                    else if(p.category==='Aksesoris')c='purple';
-                    
-                    grid.innerHTML += `
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 card-hover relative group flex flex-col justify-between">
-                        <div>
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="text-[10px] uppercase font-bold px-2 py-1 rounded-full bg-${c}-100 text-${c}-600">${p.category}</span>
-                                <div class="opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onclick="window.editProduct('${p.id}')" class="text-blue-500 mr-2"><i class="fas fa-edit"></i></button>
-                                    <button onclick="window.deleteProduct('${p.id}')" class="text-red-500"><i class="fas fa-trash"></i></button>
-                                </div>
-                            </div>
-                            <h3 class="font-bold text-gray-800 mb-2 leading-tight">${p.name}</h3>
-                            <div class="bg-gray-50 p-2 rounded border border-gray-100 mb-3">
-                                <div class="flex justify-between text-xs mb-1 text-gray-500"><span>Modal:</span><span>Rp ${(p.costPrice||0).toLocaleString()}</span></div>
-                                <div class="flex justify-between font-bold text-green-700 text-sm"><span>Jual:</span><span>Rp ${(p.sellingPrice||0).toLocaleString()}</span></div>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between pt-3 border-t">
-                            <div class="text-xs text-gray-500 uppercase font-semibold">Stok</div>
-                            <div class="flex items-center">
-                                <button onclick="window.updateStock('${p.id}', -1)" class="w-7 h-7 bg-gray-200 rounded-full font-bold hover:bg-gray-300">-</button>
-                                <span class="mx-2 font-mono font-bold w-6 text-center">${p.stock}</span>
-                                <button onclick="window.updateStock('${p.id}', 1)" class="w-7 h-7 bg-blue-100 text-blue-700 rounded-full font-bold hover:bg-blue-200">+</button>
-                            </div>
-                        </div>
-                    </div>`;
-                });
-            }
-        }
-
-        function loadHistoryData() {
-            const tbody = document.getElementById('transactionTableBody');
-            onSnapshot(collection(db, 'vikrama_transactions'), (snapshot) => {
-                const transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                transactions.sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+            filtered.forEach(p => {
+                let c = 'gray'; 
+                if(p.category?.includes('1'))c='red'; else if(p.category?.includes('2'))c='orange';
+                else if(p.category?.includes('3'))c='yellow'; else if(p.category?.includes('4'))c='blue';
+                else if(p.category==='Aksesoris')c='purple';
                 
-                if (document.getElementById('historyView').classList.contains('hidden')) return;
-                tbody.innerHTML = '';
-                if (transactions.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center p-8 text-gray-400">Belum ada riwayat.</td></tr>';
-                    document.getElementById('emptyHistory').classList.remove('hidden');
-                    return;
-                }
-                document.getElementById('emptyHistory').classList.add('hidden');
-
-                transactions.forEach(trx => {
-                    const items = (trx.items||[]).map(i => `<span class="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-bold mr-1 mb-1 border border-gray-300">${i.name} (${i.qty})</span>`).join('');
-                    const row = `
-                        <tr class="hover:bg-gray-50 transition border-b group">
-                            <td class="px-6 py-4 text-gray-600 align-top font-bold text-sm whitespace-nowrap">${trx.date}</td>
-                            <td class="px-6 py-4 align-top">
-                                <div class="font-bold text-gray-800 text-sm">${trx.groupName||'-'}</div>
-                                <div class="text-xs text-gray-500"><i class="fas fa-user mr-1"></i>${trx.picName||'-'}</div>
-                            </td>
-                            <td class="px-6 py-4 align-top whitespace-normal min-w-[200px]"><div class="flex flex-wrap gap-1">${items}</div></td>
-                            <td class="px-6 py-4 align-top text-right font-bold text-green-700 whitespace-nowrap">Rp ${(trx.totalPrice||0).toLocaleString('id-ID')}</td>
-                            <td class="px-6 py-4 align-top text-right whitespace-nowrap">
-                                <button onclick="window.deleteTrx('${trx.id}')" class="bg-red-50 text-red-500 hover:bg-red-100 p-2 rounded transition shadow-sm border border-red-100" title="Hapus"><i class="fas fa-trash"></i></button>
-                            </td>
-                        </tr>`;
-                    tbody.innerHTML += row;
-                });
+                grid.innerHTML += `
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 card-hover relative group flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-[10px] uppercase font-bold px-2 py-1 rounded-full bg-${c}-100 text-${c}-600">${p.category}</span>
+                            <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onclick="window.editProduct('${p.id}')" class="text-blue-500 mr-2"><i class="fas fa-edit"></i></button>
+                                <button onclick="window.deleteProduct('${p.id}')" class="text-red-500"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                        <h3 class="font-bold text-gray-800 mb-2 leading-tight">${p.name}</h3>
+                        <div class="bg-gray-50 p-2 rounded border border-gray-100 mb-3">
+                            <div class="flex justify-between text-xs mb-1 text-gray-500"><span>Modal:</span><span>Rp ${(p.costPrice||0).toLocaleString()}</span></div>
+                            <div class="flex justify-between font-bold text-green-700 text-sm"><span>Jual:</span><span>Rp ${(p.sellingPrice||0).toLocaleString()}</span></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between pt-3 border-t">
+                        <div class="text-xs text-gray-500 uppercase font-semibold">Stok</div>
+                        <div class="flex items-center">
+                            <button onclick="window.updateStock('${p.id}', -1)" class="w-7 h-7 bg-gray-200 rounded-full font-bold hover:bg-gray-300">-</button>
+                            <span class="mx-2 font-mono font-bold w-6 text-center">${p.stock}</span>
+                            <button onclick="window.updateStock('${p.id}', 1)" class="w-7 h-7 bg-blue-100 text-blue-700 rounded-full font-bold hover:bg-blue-200">+</button>
+                        </div>
+                    </div>
+                </div>`;
             });
         }
 
-        // --- GLOBAL & HELPERS ---
-        window.switchPage = (page) => {
-            const btnInv = document.getElementById('menu-inventory'), btnHis = document.getElementById('menu-history');
-            const grid = document.getElementById('productGrid'), history = document.getElementById('historyView'), stats = document.querySelector('.grid.grid-cols-1.sm\\:grid-cols-2');
+        // --- GROUPS ---
+        window.openGroupModal = (id = null) => {
+            document.getElementById('groupForm').reset();
+            const limitContainer = document.getElementById('limitInputsContainer');
+            limitContainer.innerHTML = '';
+            LIMIT_CATEGORIES.forEach(cat => {
+                limitContainer.innerHTML += `
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">${cat}</label>
+                        <input type="number" id="limit_${cat.replace(/\s/g,'')}" class="w-full border rounded px-2 py-1 text-sm" placeholder="Unlimited">
+                    </div>`;
+            });
 
-            if (page === 'inventory') {
-                btnInv.className = "w-full text-left px-4 py-3 rounded-lg transition flex items-center bg-blue-100 text-blue-700 font-bold border-l-4 border-blue-600";
-                btnHis.className = "w-full text-left px-4 py-3 rounded-lg transition flex items-center text-gray-600 hover:bg-gray-100";
-                grid.classList.remove('hidden'); history.classList.add('hidden');
-                document.getElementById('pageTitle').innerText = "Stok Senjata";
-                if(stats) stats.classList.remove('hidden');
-                renderProducts();
+            if (id) {
+                const g = allGroups.find(x => x.id === id);
+                if (g) {
+                    document.getElementById('groupId').value = id;
+                    document.getElementById('groupName').value = g.name;
+                    document.getElementById('groupPriceAdj').value = g.priceAdj || 0;
+                    document.getElementById('groupPeriodStart').value = g.periodStart || '';
+                    document.getElementById('groupPeriodEnd').value = g.periodEnd || '';
+                    if (g.limits) {
+                        LIMIT_CATEGORIES.forEach(cat => {
+                            const el = document.getElementById(`limit_${cat.replace(/\s/g,'')}`);
+                            if(el) el.value = g.limits[cat] || '';
+                        });
+                    }
+                    document.getElementById('groupModalTitle').innerText = 'Edit Kelompok';
+                }
             } else {
-                btnHis.className = "w-full text-left px-4 py-3 rounded-lg transition flex items-center bg-purple-100 text-purple-700 font-bold border-l-4 border-purple-600";
-                btnInv.className = "w-full text-left px-4 py-3 rounded-lg transition flex items-center text-gray-600 hover:bg-gray-100";
-                grid.classList.add('hidden'); history.classList.remove('hidden');
-                document.getElementById('pageTitle').innerText = "Riwayat Transaksi";
-                if(stats) stats.classList.add('hidden');
-                document.getElementById('emptyState').classList.add('hidden');
-                loadHistoryData();
+                document.getElementById('groupId').value = '';
+                document.getElementById('groupModalTitle').innerText = 'Tambah Kelompok';
+                document.getElementById('groupPeriodStart').valueAsDate = new Date();
+                const d = new Date(); d.setDate(d.getDate() + 77);
+                document.getElementById('groupPeriodEnd').valueAsDate = d;
             }
+            document.getElementById('groupModal').classList.remove('hidden');
         };
 
+        function renderGroups() {
+            if(document.getElementById('groupsView').classList.contains('hidden')) return;
+            const view = document.getElementById('groupsView');
+            view.innerHTML = '';
+            if (allGroups.length === 0) { view.innerHTML = '<div class="col-span-3 text-center text-gray-400 p-10">Belum ada kelompok. Klik Tambah untuk membuat.</div>'; return; }
+
+            allGroups.forEach(g => {
+                let limitTags = '';
+                LIMIT_CATEGORIES.forEach(cat => {
+                    const l = g.limits ? g.limits[cat] : null;
+                    if(l) limitTags += `<span class="bg-gray-100 text-gray-600 text-[10px] px-2 py-1 rounded border border-gray-200">${cat}: <b>${l}</b></span>`;
+                });
+                const adj = parseInt(g.priceAdj) || 0;
+                const adjBadge = adj === 0 ? '<span class="text-gray-400 text-xs">Harga Normal</span>' : 
+                                 adj > 0 ? `<span class="text-red-600 bg-red-50 px-2 py-1 rounded text-xs font-bold">Harga +${adj}%</span>` : 
+                                 `<span class="text-green-600 bg-green-50 px-2 py-1 rounded text-xs font-bold">Diskon ${adj}%</span>`;
+                const startStr = g.periodStart ? new Date(g.periodStart).toLocaleDateString('id-ID', {day:'numeric', month:'short'}) : '?';
+                const endStr = g.periodEnd ? new Date(g.periodEnd).toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'2-digit'}) : '?';
+
+                view.innerHTML += `
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col justify-between hover:shadow-md transition">
+                        <div>
+                            <div class="flex justify-between items-start mb-3">
+                                <h3 class="font-bold text-lg text-slate-800">${g.name}</h3>
+                                <div class="flex gap-2">
+                                    <button onclick="window.openGroupModal('${g.id}')" class="text-blue-500 hover:text-blue-700"><i class="fas fa-edit"></i></button>
+                                    <button onclick="window.deleteGroup('${g.id}')" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <div class="flex flex-col gap-2 mb-4">
+                                <div class="flex items-center justify-between text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded"><span><i class="fas fa-calendar-alt mr-1"></i> ${startStr} - ${endStr}</span></div>
+                                <div>${adjBadge}</div>
+                            </div>
+                            <div class="text-xs font-bold text-gray-500 uppercase mb-2">Limit Pembelian</div>
+                            <div class="flex flex-wrap gap-2 mb-4">${limitTags || '<span class="text-gray-400 text-xs italic">Tidak ada limit</span>'}</div>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        window.deleteGroup = (id) => { window.showConfirm("Hapus Kelompok ini?", async (y) => { if(y) await deleteDoc(doc(db, 'vikrama_groups', id)); }); };
+
+        document.getElementById('groupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('groupId').value;
+            const name = document.getElementById('groupName').value;
+            const priceAdj = parseInt(document.getElementById('groupPriceAdj').value) || 0;
+            const periodStart = document.getElementById('groupPeriodStart').value;
+            const periodEnd = document.getElementById('groupPeriodEnd').value;
+            const limits = {};
+            LIMIT_CATEGORIES.forEach(cat => {
+                const val = document.getElementById(`limit_${cat.replace(/\s/g,'')}`).value;
+                if(val) limits[cat] = parseInt(val);
+            });
+            const data = { name, priceAdj, periodStart, periodEnd, limits };
+            try {
+                if (id) await updateDoc(doc(db, 'vikrama_groups', id), data);
+                else await addDoc(collection(db, 'vikrama_groups'), data);
+                document.getElementById('groupModal').classList.add('hidden');
+                window.showAlert("Sukses", "Pengaturan kelompok berhasil disimpan.", "success");
+            } catch (err) { console.error(err); window.showAlert("Gagal", "Gagal menyimpan data kelompok.", "error"); }
+        });
+
+        // --- NEW REPORT VIEW ---
+        function renderReport() {
+            if(document.getElementById('reportView').classList.contains('hidden')) return;
+            const grid = document.getElementById('reportGrid');
+            grid.innerHTML = '';
+            document.getElementById('reportDateDisplay').innerText = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            allProducts.sort((a,b) => (a.category||'').localeCompare(b.category||'') || (a.name||'').localeCompare(b.name||''));
+
+            allProducts.forEach(p => {
+                let badgeColor = 'bg-gray-100 text-gray-600';
+                if(p.category?.includes('1')) badgeColor = 'bg-red-50 text-red-600 border border-red-100';
+                if(p.category?.includes('2')) badgeColor = 'bg-orange-50 text-orange-600 border border-orange-100';
+                if(p.category?.includes('3')) badgeColor = 'bg-yellow-50 text-yellow-600 border border-yellow-100'; // Added Kelas 3 Color
+                if(p.category?.includes('4')) badgeColor = 'bg-blue-50 text-blue-600 border border-blue-100';
+                if(p.category === 'Aksesoris') badgeColor = 'bg-purple-50 text-purple-600 border border-purple-100';
+                
+                grid.innerHTML += `
+                    <div class="flex items-center justify-between border-b border-gray-100 p-3 last:border-0 hover:bg-gray-50">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-[10px] px-2 py-0.5 rounded ${badgeColor} font-bold uppercase">${p.category}</span>
+                            </div>
+                            <div class="font-bold text-gray-800 text-sm">${p.name}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-2xl font-bold ${p.stock > 0 ? 'text-slate-800' : 'text-red-500'}">${p.stock}</div>
+                            <div class="text-[10px] text-gray-400 uppercase">Sisa Stok</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // --- HISTORY ---
+        function renderHistory() {
+            if(document.getElementById('historyView').classList.contains('hidden')) return;
+            const tbody = document.getElementById('transactionTableBody');
+            tbody.innerHTML = '';
+            document.getElementById('historyDateStamp').innerText = new Date().toLocaleDateString('id-ID');
+            
+            const sorted = [...allTransactions].sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+            if (sorted.length === 0) { document.getElementById('emptyHistory').classList.remove('hidden'); return; }
+            document.getElementById('emptyHistory').classList.add('hidden');
+
+            sorted.forEach(trx => {
+                const items = (trx.items||[]).map(i => `<span class="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-bold mr-1 mb-1 border border-gray-300">${i.name} (${i.qty})</span>`).join('');
+                const row = `
+                    <tr class="hover:bg-gray-50 transition border-b group">
+                        <td class="px-6 py-4 text-gray-600 align-top font-bold text-sm whitespace-nowrap">${trx.date}</td>
+                        <td class="px-6 py-4 align-top">
+                            <div class="font-bold text-gray-800 text-sm">${trx.groupName||'-'}</div>
+                            <div class="text-xs text-gray-500"><i class="fas fa-user mr-1"></i>${trx.picName||'-'}</div>
+                        </td>
+                        <td class="px-6 py-4 align-top whitespace-normal min-w-[200px]"><div class="flex flex-wrap gap-1">${items}</div></td>
+                        <td class="px-6 py-4 align-top text-right font-bold text-green-700 whitespace-nowrap">Rp ${(trx.totalPrice||0).toLocaleString('id-ID')}</td>
+                        <td class="px-6 py-4 text-center align-top">
+                            <button onclick="window.openReceipt('${trx.id}')" class="text-slate-500 hover:text-slate-800 p-2 rounded-full hover:bg-slate-100" title="Lihat Struk">
+                                <i class="fas fa-receipt"></i>
+                            </button>
+                        </td>
+                        <td class="px-6 py-4 align-top text-right whitespace-nowrap">
+                            <button onclick="window.deleteTrx('${trx.id}')" class="bg-red-50 text-red-500 hover:bg-red-100 p-2 rounded transition shadow-sm border border-red-100" title="Hapus"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+
         window.deleteTrx = (id) => {
-            window.showConfirm("Hapus? Stok barang akan kembali ke gudang.", async (y) => {
+            window.showConfirm("Hapus transaksi? Stok akan dikembalikan dan Limit akan di-reset.", async (y) => {
                 if(!y) return;
                 try {
                     const ref = doc(db, 'vikrama_transactions', id);
@@ -464,119 +976,201 @@
                     if(snap.exists()) {
                         const d = snap.data();
                         for(const item of (d.items||[])) {
-                            const p = allProducts.find(x => x.name === item.name);
+                            const p = allProducts.find(x => x.id === item.id);
                             if(p) await updateDoc(doc(db, 'vikrama_inventory', p.id), { stock: (p.stock||0) + item.qty });
                         }
                         await deleteDoc(ref);
-                        showToast("Dihapus & Stok Kembali", "success");
+                        // Success Alert instead of Toast
+                        window.showAlert("Berhasil Dihapus", "Data transaksi telah dihapus.<br>Stok produk dikembalikan dan limit kelompok diperbarui.", "success");
                     }
                 } catch(e) { showToast("Gagal Hapus", "error"); console.error(e); }
             });
         };
 
+        // --- POS SYSTEM ---
         window.openPOS = () => {
             document.getElementById('posModal').classList.remove('hidden');
             document.getElementById('posDate').valueAsDate = new Date();
             document.getElementById('cartTotalSell').innerText = 'Rp 0';
             document.getElementById('cartCountItem').innerText = '0 Item';
-            if(document.getElementById('mobCartCount')) document.getElementById('mobCartCount').innerText = '0';
-            
-            // RESET CUSTOM INPUT
             document.getElementById('customAmount').value = '';
             document.getElementById('customNote').value = '';
-
-            posCart = []; 
-            renderCart(); 
-            renderPosProducts();
-            if(window.switchPosTab) window.switchPosTab('products');
+            document.getElementById('posGroupSelect').value = '';
+            document.getElementById('posPic').value = '';
+            document.getElementById('posLimitInfo').classList.add('hidden');
+            document.getElementById('posOverlay').classList.remove('hidden');
+            posCart = []; selectedGroupId = null; activeGroupData = null; groupUsedLimits = {};
+            renderCart(); renderPosProducts();
         };
+
         window.closePOS=()=>{if(posCart.length>0)window.showConfirm("Batal?",y=>{if(y)document.getElementById('posModal').classList.add('hidden')});else document.getElementById('posModal').classList.add('hidden');};
-        window.filterCategory=(c)=>{currentCategory=c;renderProducts();document.getElementById('pageTitle').innerText=c;};
-        
-        window.addToCart=(id)=>{
-            const p=allProducts.find(x=>x.id===id); if(!p||p.stock<=0)return showToast("Stok Habis","error");
-            const x=posCart.find(i=>i.id===id);
-            if(x){if(x.qty<p.stock)x.qty++;else showToast("Max Stok","error");}
-            else posCart.push({id:p.id,name:p.name,price:p.sellingPrice||0,cost:p.costPrice||0,qty:1,max:p.stock});
-            renderCart();
-        };
-        window.updateCartQty=(id,v)=>{const i=posCart.find(x=>x.id===id);if(i){const n=i.qty+v;if(n>i.max)showToast("Limit","error");else if(n<=0)posCart=posCart.filter(x=>x.id!==id);else i.qty=n;renderCart();}};
-        window.removeFromCart=(id)=>{posCart=posCart.filter(x=>x.id!==id);renderCart();};
-        
-        function renderPosProducts(){const g=document.getElementById('posProductGrid');g.innerHTML='';allProducts.filter(p=>(posCategory==='Semua'||p.category===posCategory)&&(p.name||'').toLowerCase().includes(posSearch)&&p.stock>0).forEach(p=>{g.innerHTML+=`<div onclick="window.addToCart('${p.id}')" class="bg-white border rounded p-3 cursor-pointer hover:border-blue-500"><div class="text-xs bg-gray-100 inline px-1 rounded">${p.category}</div><div class="font-bold text-sm my-1">${p.name}</div><div class="flex justify-between text-xs text-gray-500"><span>Stok: ${p.stock}</span><span class="font-bold text-green-700">${(p.sellingPrice||0).toLocaleString()}</span></div></div>`});}
-        
-        // --- LOGIC KERANJANG (PERBAIKAN MATEMATIKA) ---
-        window.renderCart = function(){
-            const c = document.getElementById('cartItems');
-            c.innerHTML = '';
-            let subtotal = 0; 
-            let totalItem = 0;
 
+        function updatePosGroupSelect() {
+            const s = document.getElementById('posGroupSelect');
+            s.innerHTML = '<option value="">-- Pilih Kelompok --</option>';
+            allGroups.forEach(g => { s.innerHTML += `<option value="${g.id}">${g.name}</option>`; });
+        }
+
+        document.getElementById('posGroupSelect').addEventListener('change', (e) => {
+            const gid = e.target.value;
+            selectedGroupId = gid;
+            if(!gid) { document.getElementById('posOverlay').classList.remove('hidden'); activeGroupData = null; return; }
+            document.getElementById('posOverlay').classList.add('hidden');
+            activeGroupData = allGroups.find(g => g.id === gid);
+            calculateGroupUsage(gid);
+            renderPosProducts();
+        });
+
+        document.getElementById('posCategoryFilter').addEventListener('change', (e) => {
+            posCategory = e.target.value;
+            updateLimitDisplay();
+            renderPosProducts();
+        });
+
+        function updateLimitDisplay() {
+            const info = document.getElementById('posLimitInfo');
+            const nameEl = document.getElementById('limitCategoryName');
+            const valEl = document.getElementById('limitValueDisplay');
+            if (posCategory === 'Semua' || !activeGroupData || !activeGroupData.limits || !activeGroupData.limits[posCategory]) { info.classList.add('hidden'); return; }
+            info.classList.remove('hidden');
+            nameEl.innerText = posCategory;
+            const max = activeGroupData.limits[posCategory];
+            const used = groupUsedLimits[posCategory] || 0;
+            const inCart = posCart.filter(i => i.category === posCategory).reduce((a,b)=>a+b.qty,0);
+            const remaining = max - used - inCart;
+            valEl.innerText = remaining < 0 ? '0 (Over)' : remaining;
+            valEl.className = remaining <= 0 ? "font-bold text-lg text-red-600" : "font-bold text-lg text-green-700";
+        }
+
+        function calculateGroupUsage(gid) {
+            groupUsedLimits = {};
+            if(!activeGroupData) return;
+            const start = new Date(activeGroupData.periodStart);
+            const end = activeGroupData.periodEnd ? new Date(activeGroupData.periodEnd) : new Date('2099-12-31');
+            end.setHours(23, 59, 59, 999);
+
+            allTransactions.forEach(t => {
+                const isMatch = t.groupId === gid || t.groupName === activeGroupData.name;
+                const tDate = new Date(t.date);
+                if (isMatch && tDate >= start && tDate <= end) {
+                    (t.items || []).forEach(item => {
+                        let cat = item.category;
+                        if (!cat) { const p = allProducts.find(x => x.id === item.id); if (p) cat = p.category; }
+                        if (cat) { if(!groupUsedLimits[cat]) groupUsedLimits[cat] = 0; groupUsedLimits[cat] += item.qty; }
+                    });
+                }
+            });
+            updateLimitDisplay();
+        }
+
+        window.addToCart=(id)=>{
+            const p = allProducts.find(x => x.id === id); 
+            if(!p || p.stock <= 0) return window.showAlert("Gagal Tambah Item", "Stok gudang untuk item ini sudah habis.", "error");
+            
+            // Check Group Limit
+            if (activeGroupData && activeGroupData.limits) {
+                const cat = p.category;
+                const limit = activeGroupData.limits[cat];
+                if (limit) {
+                    const used = groupUsedLimits[cat] || 0;
+                    const inCart = posCart.filter(i => i.category === cat).reduce((a,b)=>a+b.qty,0);
+                    if (used + inCart + 1 > limit) {
+                        return window.showAlert("Limit Kelompok Tercapai", `Kategori: <b>${cat}</b><br>Limit: ${limit}<br>Terpakai: ${used + inCart}`, "error");
+                    }
+                }
+            }
+
+            let finalPrice = p.sellingPrice || 0;
+            if (activeGroupData && activeGroupData.priceAdj) {
+                const adj = parseInt(activeGroupData.priceAdj);
+                finalPrice = finalPrice + (finalPrice * (adj / 100));
+            }
+
+            const x = posCart.find(i => i.id === id);
+            if(x){
+                if(x.qty < p.stock) x.qty++;
+                else return window.showAlert("Maksimal Stok", "Tidak bisa menambah melebihi stok gudang.", "warning");
+            } else {
+                posCart.push({ id: p.id, name: p.name, category: p.category, basePrice: p.sellingPrice || 0, price: finalPrice, cost: p.costPrice||0, qty: 1, max: p.stock });
+            }
+            renderCart();
+            updateLimitDisplay();
+        };
+
+        window.updateCartQty=(id, v)=>{
+            const i = posCart.find(x => x.id === id);
+            if(i){
+                const n = i.qty + v;
+                if(n > i.max) return window.showAlert("Stok Gudang Habis", "Mencapai batas stok tersedia.", "error");
+                if (v > 0 && activeGroupData && activeGroupData.limits) {
+                    const cat = i.category;
+                    const limit = activeGroupData.limits[cat];
+                    if (limit) {
+                        const used = groupUsedLimits[cat] || 0;
+                        const inCart = posCart.filter(x => x.category === cat).reduce((a,b)=>a+b.qty,0); 
+                        if (used + inCart + 1 > limit) return window.showAlert("Limit Kelompok Tercapai", `Tidak dapat menambah item <b>${cat}</b> lagi.`, "error");
+                    }
+                }
+                if(n <= 0) posCart = posCart.filter(x => x.id !== id);
+                else i.qty = n;
+                renderCart(); updateLimitDisplay();
+            }
+        };
+
+        window.removeFromCart=(id)=>{ posCart = posCart.filter(x => x.id !== id); renderCart(); updateLimitDisplay(); };
+
+        function renderPosProducts() {
+            const g = document.getElementById('posProductGrid');
+            g.innerHTML = '';
+            allProducts.filter(p => (posCategory === 'Semua' || p.category === posCategory) && (p.name || '').toLowerCase().includes(posSearch) && p.stock > 0).forEach(p => {
+                let displayPrice = p.sellingPrice || 0;
+                let priceHtml = `<span class="font-bold text-green-700">${displayPrice.toLocaleString()}</span>`;
+                if (activeGroupData && activeGroupData.priceAdj) {
+                    const adj = parseInt(activeGroupData.priceAdj);
+                    const adjusted = displayPrice + (displayPrice * (adj / 100));
+                    if (adj !== 0) {
+                        priceHtml = `<div class="flex flex-col text-right"><span class="text-[10px] text-gray-400 line-through">${displayPrice.toLocaleString()}</span><span class="font-bold text-blue-700">${adjusted.toLocaleString()}</span></div>`;
+                    }
+                }
+                g.innerHTML += `<div onclick="window.addToCart('${p.id}')" class="bg-white border rounded p-3 cursor-pointer hover:border-blue-500 shadow-sm relative group"><div class="text-[10px] bg-gray-100 inline px-1 rounded text-gray-600 mb-1">${p.category}</div><div class="font-bold text-sm text-gray-800 leading-tight mb-2 h-10 overflow-hidden">${p.name}</div><div class="flex justify-between items-end border-t pt-2"><span class="text-xs text-gray-500">Stok: ${p.stock}</span>${priceHtml}</div></div>`;
+            });
+        }
+
+        window.renderCart = function() {
+            const c = document.getElementById('cartItems'); c.innerHTML = '';
+            let subtotal = 0; let totalItem = 0;
             if(posCart.length === 0){
                 c.innerHTML = '<div class="text-center text-gray-400 mt-10 text-xs">Keranjang Kosong</div>';
                 document.getElementById('btnCheckout').disabled = true;
             } else {
                 posCart.forEach(i => {
-                    subtotal += i.price * i.qty; 
-                    totalItem += i.qty;
-                    c.innerHTML += `
-                    <div class="flex justify-between items-center bg-gray-50 p-2 rounded mb-2 border">
-                        <div class="flex-1 font-bold text-xs text-gray-700">${i.name}</div>
-                        <div class="flex items-center gap-2 mx-2">
-                            <button onclick="window.updateCartQty('${i.id}',-1)" class="w-5 h-5 bg-gray-200 rounded text-xs hover:bg-gray-300">-</button>
-                            <span class="text-xs font-bold w-4 text-center">${i.qty}</span>
-                            <button onclick="window.updateCartQty('${i.id}',1)" class="w-5 h-5 bg-blue-100 text-blue-600 rounded text-xs hover:bg-blue-200">+</button>
-                        </div>
-                        <div class="text-right text-xs font-bold text-gray-700">${(i.price * i.qty).toLocaleString()}</div>
-                    </div>`;
+                    subtotal += i.price * i.qty; totalItem += i.qty;
+                    c.innerHTML += `<div class="flex justify-between items-center bg-gray-50 p-2 rounded mb-2 border"><div class="flex-1 font-bold text-xs text-gray-700">${i.name}</div><div class="flex items-center gap-2 mx-2"><button onclick="window.updateCartQty('${i.id}',-1)" class="w-5 h-5 bg-gray-200 rounded text-xs hover:bg-gray-300">-</button><span class="text-xs font-bold w-4 text-center">${i.qty}</span><button onclick="window.updateCartQty('${i.id}',1)" class="w-5 h-5 bg-blue-100 text-blue-600 rounded text-xs hover:bg-blue-200">+</button></div><div class="text-right text-xs font-bold text-gray-700">${(i.price * i.qty).toLocaleString()}</div></div>`;
                 });
                 document.getElementById('btnCheckout').disabled = false;
             }
-
-            // 1. Ambil Nilai Custom (Markup/Diskon)
             const customInput = document.getElementById('customAmount');
-            let customVal = 0;
-            if(customInput) {
-                // Pastikan input kosong tidak jadi NaN
-                customVal = parseInt(customInput.value) || 0;
-            }
-            
-            // 2. Hitung Total Akhir
+            let customVal = parseInt(customInput.value) || 0;
             const finalTotal = subtotal + customVal;
-
-            // 3. Tampilkan Visual
             const totalEl = document.getElementById('cartTotalSell');
-            
-            if (customVal !== 0) {
-                // Jika ada perubahan harga, tampilkan coret
-                totalEl.innerHTML = `
-                    <div class="flex flex-col items-end">
-                        <span class="text-[10px] text-gray-400 line-through decoration-red-500 mr-1">Rp ${subtotal.toLocaleString('id-ID')}</span>
-                        <span class="text-2xl font-bold text-blue-700 leading-none">Rp ${finalTotal.toLocaleString('id-ID')}</span>
-                    </div>`;
-            } else {
-                // Normal
-                totalEl.innerText = 'Rp ' + finalTotal.toLocaleString('id-ID');
-            }
-
+            if (customVal !== 0) totalEl.innerHTML = `<div class="flex flex-col items-end"><span class="text-[10px] text-gray-400 line-through decoration-red-500 mr-1">Rp ${subtotal.toLocaleString('id-ID')}</span><span class="text-2xl font-bold text-blue-700 leading-none">Rp ${finalTotal.toLocaleString('id-ID')}</span></div>`;
+            else totalEl.innerText = 'Rp ' + finalTotal.toLocaleString('id-ID');
             document.getElementById('cartCountItem').innerText = totalItem + ' Item';
-            if(document.getElementById('mobCartCount')) document.getElementById('mobCartCount').innerText = totalItem;
         };
 
         window.processCheckout = () => {
             const d = document.getElementById('posDate').value;
-            const g = document.getElementById('posGroup').value;
             const pic = document.getElementById('posPic').value;
             const customVal = parseInt(document.getElementById('customAmount').value) || 0;
             const customNote = document.getElementById('customNote').value || (customVal > 0 ? 'Markup' : (customVal < 0 ? 'Diskon' : '-'));
 
-            if(!d || !g || !pic) return showToast("Lengkapi Data (Tanggal, Kelompok, PIC)!", "error");
+            if(!activeGroupData) return window.showAlert("Kelompok Belum Dipilih", "Silahkan pilih kelompok pembeli terlebih dahulu.", "warning");
+            if(!d || !pic) return window.showAlert("Data Tidak Lengkap", "Pastikan <b>Tanggal</b> dan <b>Nama PIC</b> (Penanggung Jawab) sudah terisi dengan benar.", "warning");
 
             window.showConfirm("Proses Transaksi?", async y => {
                 if(!y) return;
                 try {
-                    let subtotalJual = 0;
-                    let totalModal = 0;
+                    let subtotalJual = 0; let totalModal = 0;
                     for(const i of posCart){
                         const p = allProducts.find(x => x.id === i.id);
                         if(p) await updateDoc(doc(db,'vikrama_inventory',i.id), {stock: Math.max(0, p.stock - i.qty)});
@@ -587,47 +1181,56 @@
                     const finalProfit = finalTotalPrice - totalModal;
 
                     await addDoc(collection(db,'vikrama_transactions'), {
-                        date: d, groupName: g, picName: pic, items: posCart,
+                        date: d, groupId: activeGroupData.id, groupName: activeGroupData.name, picName: pic, items: posCart,
                         subtotalItem: subtotalJual, customAmount: customVal, customNote: customNote,
                         totalPrice: finalTotalPrice, totalCost: totalModal, totalProfit: finalProfit,
                         createdAt: new Date().toISOString()
                     });
 
+                    // Capture current state BEFORE clearing cart for summary calculation
+                    const itemsBought = [...posCart];
+                    const preTransactionUsage = {...groupUsedLimits}; // Shallow copy
+
                     posCart = [];
                     document.getElementById('customAmount').value = '';
                     document.getElementById('customNote').value = '';
                     renderCart();
+                    
                     document.getElementById('posModal').classList.add('hidden');
-                    showToast("Transaksi Berhasil!", "success");
-                } catch(e) { console.error(e); showToast("Gagal Memproses", "error"); }
+                    // Pass pre-transaction usage to correctly calculate remaining
+                    window.showSuccessSummary(itemsBought, preTransactionUsage);
+                    
+                } catch(e) { console.error(e); window.showAlert("Gagal Memproses", "Terjadi kesalahan saat menyimpan transaksi.", "error"); }
             });
         };
 
-        // UI Listeners & CRUD
         document.getElementById('searchInput').addEventListener('input',e=>{searchTerm=e.target.value.toLowerCase();renderProducts();});
         document.getElementById('posSearchInput').addEventListener('input',e=>{posSearch=e.target.value.toLowerCase();renderPosProducts();});
-        document.getElementById('posCategoryFilter').addEventListener('change',e=>{posCategory=e.target.value;renderPosProducts();});
+        
         window.openModal=()=>{document.getElementById('productForm').reset();document.getElementById('productId').value='';document.getElementById('modalTitle').innerText='Tambah Data';document.getElementById('productModal').classList.remove('hidden');};
         window.closeModal=()=>{document.getElementById('productModal').classList.add('hidden');};
         window.editProduct=(id)=>{const p=allProducts.find(x=>x.id===id);if(!p)return;document.getElementById('productId').value=id;document.getElementById('name').value=p.name;document.getElementById('category').value=p.category;document.getElementById('stock').value=p.stock;document.getElementById('costPrice').value=p.costPrice;document.getElementById('sellingPrice').value=p.sellingPrice;document.getElementById('productModal').classList.remove('hidden');};
         window.deleteProduct=(id)=>{window.showConfirm("Hapus item?",async y=>{if(y)await deleteDoc(doc(db,'vikrama_inventory',id));});};
         window.updateStock=async(id,v)=>{const p=allProducts.find(x=>x.id===id);if(p){const n=(p.stock||0)+v;if(n>=0)await updateDoc(doc(db,'vikrama_inventory',id),{stock:n});}};
+        window.filterCategory=(c)=>{currentCategory=c;renderProducts();};
+        
         document.getElementById('productForm').addEventListener('submit',async e=>{e.preventDefault();const id=document.getElementById('productId').value, d={name:document.getElementById('name').value,category:document.getElementById('category').value,stock:parseInt(document.getElementById('stock').value)||0,costPrice:parseInt(document.getElementById('costPrice').value)||0,sellingPrice:parseInt(document.getElementById('sellingPrice').value)||0};try{if(id)await updateDoc(doc(db,'vikrama_inventory',id),d);else await addDoc(collection(db,'vikrama_inventory'),d);window.closeModal();showToast("Sukses","success");}catch{showToast("Gagal","error");}});
 
-        // Excel Import
         const xl=document.getElementById('excelInput');
         if(xl)xl.addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=async ev=>{try{const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'}),js=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);for(const row of js){const k=Object.keys(row),find=a=>row[k.find(x=>a.some(s=>x.toLowerCase().includes(s)))];await addDoc(collection(db,'vikrama_inventory'),{name:find(['nama','name'])||'Item',category:find(['kat','cat'])||'Aksesoris',stock:parseInt(find(['stok','qty']))||0,costPrice:parseInt(find(['modal','cost']))||0,sellingPrice:parseInt(find(['jual','price']))||0});}document.getElementById('importModal').classList.add('hidden');xl.value='';showToast("Import Sukses","success");}catch(err){alert(err.message);}};r.readAsArrayBuffer(f);});
 
-        // Setup Init
         const nav=document.getElementById('categoryList'), posSel=document.getElementById('posCategoryFilter'), formSel=document.getElementById('category'), mobSel=document.getElementById('mobileCategorySelect');
-        CATEGORIES.forEach(c=>{nav.innerHTML+=`<button onclick="window.filterCategory('${c}')" class="w-full text-left px-4 py-2 rounded-lg mb-1 hover:bg-gray-100 text-gray-600">${c}</button>`;posSel.innerHTML+=`<option value="${c}">${c}</option>`;mobSel.innerHTML+=`<option value="${c}">${c}</option>`;if(c!=='Semua')formSel.innerHTML+=`<option value="${c}">${c}</option>`;});
+        CATEGORIES.forEach(c=>{
+            nav.innerHTML+=`<button onclick="window.filterCategory('${c}')" class="w-full text-left px-4 py-2 rounded-lg mb-1 hover:bg-gray-100 text-gray-600">${c}</button>`;
+            posSel.innerHTML+=`<option value="${c}">${c}</option>`;
+            mobSel.innerHTML+=`<option value="${c}">${c}</option>`;
+            if(c!=='Semua')formSel.innerHTML+=`<option value="${c}">${c}</option>`;
+        });
         mobSel.addEventListener('change',e=>window.filterCategory(e.target.value));
         function showToast(m,t){const d=document.createElement('div');d.className=`toast ${t==='success'?'toast-success':'toast-error'}`;d.innerText=m;document.getElementById('toast-container').appendChild(d);setTimeout(()=>d.remove(),3000);}
         let cfm;window.showConfirm=(m,c)=>{document.getElementById('confirmMessage').innerText=m;document.getElementById('confirmationModal').classList.remove('hidden');cfm=c;};window.confirmYes=()=>{document.getElementById('confirmationModal').classList.add('hidden');if(cfm)cfm(true);};window.confirmNo=()=>{document.getElementById('confirmationModal').classList.add('hidden');if(cfm)cfm(false);};
 
-        // START
         initApp();
     </script>
-    
 </body>
 </html>
