@@ -8,8 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- Library Screenshot -->
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <!-- Library Screenshot (Updated to CDNJS & Version 1.4.1 for better compatibility) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -35,7 +35,8 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center">
-                    <img src="https://i.ibb.co.com/v4GmRjLj/Hitam-Oranye-Lingkaran-Paguyuban-Kelas-Logo.png" alt="Logo" class="h-8 mr-3 rounded-full bg-white shadow-sm">
+                    <!-- Added crossorigin for html2canvas compatibility -->
+                    <img src="https://i.ibb.co.com/v4GmRjLj/Hitam-Oranye-Lingkaran-Paguyuban-Kelas-Logo.png" alt="Logo" class="h-8 mr-3 rounded-full bg-white p-1 shadow-sm" crossorigin="anonymous">
                     <div class="flex flex-col">
                         <span class="font-bold text-lg leading-tight tracking-wide uppercase">Vikrama Kulapati</span>
                         <span class="text-xs text-gray-400 tracking-wider">Gun Storage System</span>
@@ -168,7 +169,8 @@
                     <div id="stockReportCard" class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
                         <div class="flex justify-between items-center mb-6 border-b border-gray-200 pb-4">
                             <div class="flex items-center">
-                                <img src="https://i.ibb.co.com/v4GmRjLj/Hitam-Oranye-Lingkaran-Paguyuban-Kelas-Logo.png" class="h-10 mr-3">
+                                <!-- Added crossorigin here too -->
+                                <img src="https://i.ibb.co.com/v4GmRjLj/Hitam-Oranye-Lingkaran-Paguyuban-Kelas-Logo.png" class="h-10 mr-3" crossorigin="anonymous">
                                 <div>
                                     <h2 class="text-2xl font-bold text-slate-900 uppercase tracking-wide">Laporan Sisa Stok</h2>
                                     <p class="text-sm text-gray-500">Vikrama Kulapati Inventory Status</p>
@@ -198,7 +200,7 @@
                 <div class="flex flex-col md:flex-row justify-between items-center gap-2">
                     <div class="text-xs text-gray-500 font-medium">&copy; <span id="year">2025</span> <span class="font-bold text-slate-800">Vikrama Kulapati</span>.</div>
                     <div class="flex items-center gap-2 text-xs text-gray-400">
-                        <span>Ver 4.2</span><div class="w-1 h-1 bg-gray-300 rounded-full"></div><span>System Ready</span>
+                        <span>Ver 4.3 </span><div class="w-1 h-1 bg-gray-300 rounded-full"></div><span>System Ready</span>
                     </div>
                 </div>
             </footer>
@@ -582,6 +584,11 @@
                 iconBg.classList.add('bg-yellow-100');
                 icon.className = 'fas fa-exclamation-triangle text-yellow-600';
                 btn.classList.add('bg-yellow-600', 'hover:bg-yellow-700');
+            } else if (type === 'success') {
+                border.classList.add('border-green-500');
+                iconBg.classList.add('bg-green-100');
+                icon.className = 'fas fa-check-circle text-green-600';
+                btn.classList.add('bg-green-600', 'hover:bg-green-700');
             } else {
                 border.classList.add('border-blue-500');
                 iconBg.classList.add('bg-blue-100');
@@ -639,15 +646,19 @@
             const el = document.getElementById(elementId);
             if(!el) return;
             showToast("Mengambil gambar...", "success");
-            html2canvas(el, { scale: 2 }).then(canvas => {
+            html2canvas(el, { 
+                scale: 2,
+                useCORS: true, 
+                logging: true 
+            }).then(canvas => {
                 const link = document.createElement('a');
                 link.download = `${filename}_${new Date().toISOString().slice(0,10)}.png`;
-                link.href = canvas.toDataURL();
+                link.href = canvas.toDataURL("image/png");
                 link.click();
                 showToast("Gambar berhasil disimpan!", "success");
             }).catch(err => {
-                console.error(err);
-                window.showAlert("Gagal", "Tidak dapat mengambil gambar.", "error");
+                console.error("Screenshot failed:", err);
+                window.showAlert("Gagal", "Tidak dapat mengambil gambar. Cek konsol browser.", "error");
             });
         };
 
@@ -1302,4 +1313,3 @@
     </script>
 </body>
 </html>
-
