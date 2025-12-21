@@ -200,7 +200,7 @@
                 <div class="flex flex-col md:flex-row justify-between items-center gap-2">
                     <div class="text-xs text-gray-500 font-medium">&copy; <span id="year">2025</span> <span class="font-bold text-slate-800">Vikrama Kulapati</span>.</div>
                     <div class="flex items-center gap-2 text-xs text-gray-400">
-                        <span>Ver 4.3 </span><div class="w-1 h-1 bg-gray-300 rounded-full"></div><span>System Ready</span>
+                        <span>Ver 4.4</span><div class="w-1 h-1 bg-gray-300 rounded-full"></div><span>System Ready</span>
                     </div>
                 </div>
             </footer>
@@ -796,6 +796,12 @@
                 document.getElementById('categoryList').classList.remove('hidden');
                 document.getElementById('mobileFilterContainer').classList.remove('hidden');
                 document.getElementById('actionButtons').classList.remove('hidden');
+                
+                // RESTORE BUTTONS
+                document.querySelector('#actionButtons input[type="text"]').classList.remove('hidden');
+                document.querySelector('#actionButtons .relative').classList.remove('hidden');
+                document.querySelector('#actionButtons button').setAttribute('onclick', 'window.openModal()');
+                
                 renderProducts();
             } else if (page === 'groups') {
                 document.getElementById('groupsView').classList.remove('hidden');
