@@ -35,7 +35,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center">
-                    <img src="https://i.ibb.co.com/v4GmRjLj/Hitam-Oranye-Lingkaran-Paguyuban-Kelas-Logo.png" alt="Logo" class="h-8 mr-3 rounded-full bg-white p-1 shadow-sm">
+                    <img src="https://i.ibb.co.com/v4GmRjLj/Hitam-Oranye-Lingkaran-Paguyuban-Kelas-Logo.png" alt="Logo" class="h-8 mr-3 rounded-full bg-white shadow-sm">
                     <div class="flex flex-col">
                         <span class="font-bold text-lg leading-tight tracking-wide uppercase">Vikrama Kulapati</span>
                         <span class="text-xs text-gray-400 tracking-wider">Gun Storage System</span>
@@ -198,7 +198,7 @@
                 <div class="flex flex-col md:flex-row justify-between items-center gap-2">
                     <div class="text-xs text-gray-500 font-medium">&copy; <span id="year">2025</span> <span class="font-bold text-slate-800">Vikrama Kulapati</span>.</div>
                     <div class="flex items-center gap-2 text-xs text-gray-400">
-                        <span>Ver 2.0</span><div class="w-1 h-1 bg-gray-300 rounded-full"></div><span>System Ready</span>
+                        <span>Ver 4.2</span><div class="w-1 h-1 bg-gray-300 rounded-full"></div><span>System Ready</span>
                     </div>
                 </div>
             </footer>
@@ -326,6 +326,19 @@
                 </div>
                 <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-lg shadow-lg">Simpan Pengaturan</button>
             </form>
+        </div>
+    </div>
+
+    <!-- NEW: Check Limit Modal -->
+    <div id="limitStatusModal" class="fixed inset-0 z-[55] hidden flex items-center justify-center bg-black bg-opacity-50 p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden alert-card">
+            <div class="bg-indigo-600 p-4 flex justify-between items-center text-white">
+                <h3 class="font-bold text-lg" id="limitStatusTitle">Sisa Limit</h3>
+                <button onclick="document.getElementById('limitStatusModal').classList.add('hidden')" class="hover:bg-indigo-700 p-1 rounded"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 bg-gray-50" id="limitStatusContent">
+                <!-- Injected -->
+            </div>
         </div>
     </div>
 
@@ -591,7 +604,6 @@
                 cats[i.category] += i.qty;
             });
 
-            // Re-fetch fresh group data to ensure we have valid limits
             let limits = {};
             if(activeGroupData) {
                 const freshGroup = allGroups.find(g => g.id === activeGroupData.id);
@@ -602,16 +614,10 @@
                 container.innerHTML = '<div class="text-center italic">Tidak ada limit aktif untuk kelompok ini.</div>';
             } else {
                 for (const [cat, qty] of Object.entries(cats)) {
-                    // Jika limit tidak di-set (undefined) atau 0, anggap tidak ada limit (unlimited)
-                    // Tapi di kode sebelumnya: undefined -> 0.
-                    // Mari kita cek input form. Jika kosong -> undefined.
-                    // Jika undefined, kita anggap Unlimited.
-                    
                     const max = limits[cat]; 
                     
                     let limitText = "∞";
                     if (max !== undefined && max !== null && max !== "") {
-                        // Limit is set
                         const usedBefore = preTransactionUsage[cat] || 0;
                         const remaining = Math.max(0, max - (usedBefore + qty));
                         limitText = remaining.toString();
@@ -643,6 +649,67 @@
                 console.error(err);
                 window.showAlert("Gagal", "Tidak dapat mengambil gambar.", "error");
             });
+        };
+
+        // --- CHECK LIMIT FEATURE ---
+        window.openCheckLimit = (groupId) => {
+            const group = allGroups.find(g => g.id === groupId);
+            if(!group) return;
+
+            document.getElementById('limitStatusTitle').innerText = `Sisa Limit: ${group.name}`;
+            const container = document.getElementById('limitStatusContent');
+            container.innerHTML = '<div class="text-center"><i class="fas fa-circle-notch fa-spin"></i> Menghitung...</div>';
+            document.getElementById('limitStatusModal').classList.remove('hidden');
+
+            // Calculate usage on the fly
+            const usage = {};
+            const start = new Date(group.periodStart);
+            const end = group.periodEnd ? new Date(group.periodEnd) : new Date('2099-12-31');
+            end.setHours(23, 59, 59, 999);
+
+            allTransactions.forEach(t => {
+                const isMatch = t.groupId === groupId || t.groupName === group.name;
+                const tDate = new Date(t.date);
+                if (isMatch && tDate >= start && tDate <= end) {
+                    (t.items || []).forEach(item => {
+                        let cat = item.category;
+                        if (!cat) { const p = allProducts.find(x => x.id === item.id); if (p) cat = p.category; }
+                        if (cat) { if(!usage[cat]) usage[cat] = 0; usage[cat] += item.qty; }
+                    });
+                }
+            });
+
+            container.innerHTML = '';
+            const catsToCheck = LIMIT_CATEGORIES;
+            if(catsToCheck.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-500">Tidak ada kategori limit.</p>';
+            } else {
+                catsToCheck.forEach(cat => {
+                    const max = group.limits ? group.limits[cat] : null;
+                    const used = usage[cat] || 0;
+                    
+                    let statusHtml = '';
+                    if (max === undefined || max === null || max === "") {
+                         statusHtml = `<span class="text-blue-600 font-bold">∞ (Unlimited)</span>`;
+                    } else {
+                        const remaining = Math.max(0, max - used);
+                        const color = remaining === 0 ? 'text-red-600' : 'text-green-600';
+                        statusHtml = `
+                            <div class="text-xs text-gray-500">Terpakai: ${used} / ${max}</div>
+                            <div class="${color} font-bold text-lg">${remaining}</div>
+                        `;
+                    }
+
+                    container.innerHTML += `
+                        <div class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-gray-200 mb-2">
+                            <span class="font-bold text-gray-700">${cat}</span>
+                            <div class="text-right leading-tight">
+                                ${statusHtml}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
         };
 
         // --- RECEIPT LOGIC ---
@@ -860,8 +927,9 @@
                             <div class="flex justify-between items-start mb-3">
                                 <h3 class="font-bold text-lg text-slate-800">${g.name}</h3>
                                 <div class="flex gap-2">
-                                    <button onclick="window.openGroupModal('${g.id}')" class="text-blue-500 hover:text-blue-700"><i class="fas fa-edit"></i></button>
-                                    <button onclick="window.deleteGroup('${g.id}')" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
+                                    <button onclick="window.openCheckLimit('${g.id}')" class="text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 p-2 rounded-full" title="Cek Sisa Limit"><i class="fas fa-eye"></i></button>
+                                    <button onclick="window.openGroupModal('${g.id}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-2 rounded-full"><i class="fas fa-edit"></i></button>
+                                    <button onclick="window.deleteGroup('${g.id}')" class="text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 p-2 rounded-full"><i class="fas fa-trash"></i></button>
                                 </div>
                             </div>
                             <div class="flex flex-col gap-2 mb-4">
@@ -911,7 +979,7 @@
                 let badgeColor = 'bg-gray-100 text-gray-600';
                 if(p.category?.includes('1')) badgeColor = 'bg-red-50 text-red-600 border border-red-100';
                 if(p.category?.includes('2')) badgeColor = 'bg-orange-50 text-orange-600 border border-orange-100';
-                if(p.category?.includes('3')) badgeColor = 'bg-yellow-50 text-yellow-600 border border-yellow-100'; // Added Kelas 3 Color
+                if(p.category?.includes('3')) badgeColor = 'bg-yellow-50 text-yellow-600 border border-yellow-100';
                 if(p.category?.includes('4')) badgeColor = 'bg-blue-50 text-blue-600 border border-blue-100';
                 if(p.category === 'Aksesoris') badgeColor = 'bg-purple-50 text-purple-600 border border-purple-100';
                 
